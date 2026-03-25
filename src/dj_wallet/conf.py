@@ -26,6 +26,14 @@ class WalletSettings:
     TRANSFER_SERVICE_CLASS: str = "dj_wallet.services.transfer.TransferService"
     EXCHANGE_SERVICE_CLASS: str = "dj_wallet.services.exchange.ExchangeService"
     PURCHASE_SERVICE_CLASS: str = "dj_wallet.services.purchase.PurchaseService"
+    PERMISSION_POLICY_CLASS: str = "dj_wallet.permissions.DefaultPermissionPolicy"
+    SIGNATURE_SERVICE_CLASS: str = "dj_wallet.signature.SignatureService"
+    ANCHOR_SERVICE_CLASS: str = "dj_wallet.anchor.AnchorService"
+    COMPLIANCE_SERVICE_CLASS: str = "dj_wallet.compliance.ComplianceService"
+    FRAUD_SERVICE_CLASS: str = "dj_wallet.fraud.FraudService"
+
+    # On-chain anchoring defaults
+    ANCHOR_CHAIN_NAME: str = "devnet"
 
     # Transaction expiration settings
     PENDING_TRANSACTION_EXPIRY_HOURS: int = (
@@ -82,6 +90,11 @@ class WalletSettings:
             ("TRANSFER_SERVICE_CLASS", self.TRANSFER_SERVICE_CLASS),
             ("EXCHANGE_SERVICE_CLASS", self.EXCHANGE_SERVICE_CLASS),
             ("PURCHASE_SERVICE_CLASS", self.PURCHASE_SERVICE_CLASS),
+            ("PERMISSION_POLICY_CLASS", self.PERMISSION_POLICY_CLASS),
+            ("SIGNATURE_SERVICE_CLASS", self.SIGNATURE_SERVICE_CLASS),
+            ("ANCHOR_SERVICE_CLASS", self.ANCHOR_SERVICE_CLASS),
+            ("COMPLIANCE_SERVICE_CLASS", self.COMPLIANCE_SERVICE_CLASS),
+            ("FRAUD_SERVICE_CLASS", self.FRAUD_SERVICE_CLASS),
         ]
 
         for name, value in service_classes:
@@ -99,6 +112,12 @@ class WalletSettings:
             raise ImproperlyConfigured(
                 "dj_wallet['PENDING_TRANSACTION_EXPIRY_HOURS'] must be a positive integer. "
                 f"Got: {self.PENDING_TRANSACTION_EXPIRY_HOURS}"
+            )
+
+        if not isinstance(self.ANCHOR_CHAIN_NAME, str) or not self.ANCHOR_CHAIN_NAME:
+            raise ImproperlyConfigured(
+                "dj_wallet['ANCHOR_CHAIN_NAME'] must be a non-empty string. "
+                f"Got: {self.ANCHOR_CHAIN_NAME}"
             )
 
     def __getattr__(self, name: str) -> Any:

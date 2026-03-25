@@ -33,6 +33,10 @@ class WalletMixin:
         w, created = Wallet.objects.get_or_create(
             holder_type=ct, holder_id=self.pk, slug="default"
         )
+        if created:
+            from .signals import wallet_created
+
+            wallet_created.send(sender=Wallet, wallet=w, holder=self)
         return w
 
     def get_wallet(self, slug="default"):
@@ -40,9 +44,13 @@ class WalletMixin:
         Retrieve a specific wallet by slug.
         """
         ct = ContentType.objects.get_for_model(self)
-        w, _ = Wallet.objects.get_or_create(
+        w, created = Wallet.objects.get_or_create(
             holder_type=ct, holder_id=self.pk, slug=slug
         )
+        if created:
+            from .signals import wallet_created
+
+            wallet_created.send(sender=Wallet, wallet=w, holder=self)
         return w
 
     def create_wallet(self, slug, **meta):
@@ -75,14 +83,14 @@ class WalletMixin:
         from .utils import get_wallet_service
 
         WalletService = get_wallet_service()
-        return WalletService.withdraw(self.wallet, amount, meta, confirmed)
+        return WalletService.withdraw(self.wallet, amount, meta, confirmed, actor=self)
 
     def force_withdraw(self, amount, meta=None, confirmed=True):
         """Proxy to WalletService force_withdraw"""
         from .utils import get_wallet_service
 
         WalletService = get_wallet_service()
-        return WalletService.force_withdraw(self.wallet, amount, meta, confirmed)
+        return WalletService.force_withdraw(self.wallet, amount, meta, confirmed, actor=self)
 
     def transfer(self, to_holder, amount, meta=None):
         """

@@ -73,6 +73,11 @@ class AbstractWallet(models.Model):
     # Metadata for the wallet
     meta = models.JSONField(blank=True, null=True, default=dict)
 
+    # Cryptographic audit trail
+    hash_algo = models.CharField(max_length=32, default="sha256")
+    prev_tx_hash = models.CharField(max_length=128, blank=True, default="")
+    tx_hash = models.CharField(max_length=128, blank=True, default="")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -9,6 +9,7 @@ from ..exceptions import TransactionAlreadyProcessed
 from ..models import Transfer
 from ..signals import transfer_completed
 from .common import WalletService
+from ..utils import get_permission_policy
 
 
 class TransferService:
@@ -54,12 +55,17 @@ class TransferService:
             for pk in wallets_to_lock:
                 Wallet.objects.select_for_update().get(pk=pk)
 
+            # Permission checks
+            PermissionPolicy = get_permission_policy()
+            PermissionPolicy().check(from_holder, sender_wallet, "transfer", amount, meta)
+
             # 1. Withdraw from sender (this acquires the lock on sender_wallet)
             withdraw_txn = WalletService.withdraw(
                 sender_wallet,
                 amount,
                 meta={**meta, "action": "transfer_send"},
                 confirmed=True,
+                actor=from_holder,
             )
 
             # 2. Deposit to receiver (this acquires the lock on receiver_wallet)

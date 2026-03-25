@@ -14,7 +14,15 @@ from ..exceptions import (
     WalletFrozen,
 )
 from ..models import Transaction, Wallet
-from ..signals import balance_changed, transaction_confirmed, transaction_created
+from ..signals import (
+    balance_changed,
+    pre_deposit,
+    pre_withdraw,
+    transaction_confirmed,
+    transaction_created,
+)
+from ..crypto import compute_transaction_hash
+from ..utils import get_anchor_service, get_permission_policy, get_signature_service
 
 
 class WalletService:
@@ -96,6 +104,8 @@ class WalletService:
             # Check if wallet is frozen
             cls._check_frozen(locked_wallet)
 
+            pre_deposit.send(sender=cls, wallet=locked_wallet, amount=amount, meta=meta)
+
             # Determine transaction status based on confirmed flag
             status = (
                 Transaction.STATUS_COMPLETED
@@ -113,6 +123,7 @@ class WalletService:
                 status=status,
                 meta=meta,
             )
+            cls._finalize_transaction(txn, locked_wallet)
 
             if confirmed:
                 locked_wallet.balance += amount
@@ -126,7 +137,7 @@ class WalletService:
             return txn
 
     @classmethod
-    def withdraw(cls, wallet, amount, meta=None, confirmed=True):
+    def withdraw(cls, wallet, amount, meta=None, confirmed=True, actor=None):
         """
         Performs a withdrawal. Checks for sufficient funds inside the lock.
 
@@ -153,6 +164,13 @@ class WalletService:
             # Check if wallet is frozen
             cls._check_frozen(locked_wallet)
 
+            # Permission checks
+            if actor is not None:
+                PermissionPolicy = get_permission_policy()
+                PermissionPolicy().check(actor, locked_wallet, "withdraw", amount, meta)
+
+            pre_withdraw.send(sender=cls, wallet=locked_wallet, amount=amount, meta=meta)
+
             # Check balance *after* acquiring lock
             if confirmed and locked_wallet.balance < amount:
                 raise InsufficientFunds(
@@ -176,6 +194,7 @@ class WalletService:
                 status=status,
                 meta=meta,
             )
+            cls._finalize_transaction(txn, locked_wallet)
 
             if confirmed:
                 locked_wallet.balance -= amount
@@ -187,7 +206,7 @@ class WalletService:
             return txn
 
     @classmethod
-    def force_withdraw(cls, wallet, amount, meta=None, confirmed=True):
+    def force_withdraw(cls, wallet, amount, meta=None, confirmed=True, actor=None):
         """
         Withdraws even if balance is insufficient (can go negative).
 
@@ -229,6 +248,7 @@ class WalletService:
                 status=status,
                 meta=meta,
             )
+            cls._finalize_transaction(txn, locked_wallet)
 
             if confirmed:
                 locked_wallet.balance -= amount
@@ -240,7 +260,46 @@ class WalletService:
             return txn
 
     @classmethod
-    def confirm_transaction(cls, txn):
+    def _finalize_transaction(cls, txn, wallet):
+        """
+        Compute hash chain, signature, and create anchor record.
+        """
+        last_tx = (
+            Transaction.objects.filter(wallet=wallet)
+            .exclude(pk=txn.pk)
+            .order_by("-created_at", "-id")
+            .first()
+        )
+        prev_hash = last_tx.tx_hash if last_tx else ""
+
+        payload = {
+            "uuid": str(txn.uuid),
+            "wallet_id": txn.wallet_id,
+            "payable_type_id": txn.payable_type_id,
+            "payable_id": txn.payable_id,
+            "type": txn.type,
+            "amount": str(txn.amount),
+            "status": txn.status,
+            "confirmed": txn.confirmed,
+            "meta": txn.meta,
+            "created_at": txn.created_at.isoformat() if txn.created_at else "",
+            "prev_tx_hash": prev_hash,
+        }
+        tx_hash = compute_transaction_hash(payload, algo=txn.hash_algo)
+        txn.prev_tx_hash = prev_hash
+        txn.tx_hash = tx_hash
+        txn.save(update_fields=["prev_tx_hash", "tx_hash", "updated_at"])
+
+        # Sign and anchor only when completed
+        if txn.status == Transaction.STATUS_COMPLETED:
+            SignatureService = get_signature_service()
+            if not txn.signatures.exists():
+                SignatureService.sign(txn)
+            AnchorService = get_anchor_service()
+            AnchorService.ensure_anchor(txn)
+
+    @classmethod
+    def confirm_transaction(cls, txn, actor=None):
         """
         Confirm a pending transaction, applying its effect to the wallet balance.
 
@@ -274,6 +333,11 @@ class WalletService:
 
             # For withdrawals, check sufficient funds
             if locked_txn.type == Transaction.TYPE_WITHDRAW:
+                if actor is not None:
+                    PermissionPolicy = get_permission_policy()
+                    PermissionPolicy().check(
+                        actor, locked_wallet, "withdraw", locked_txn.amount, locked_txn.meta
+                    )
                 if locked_wallet.balance < locked_txn.amount:
                     raise InsufficientFunds(
                         _(
@@ -295,6 +359,8 @@ class WalletService:
 
             # Update wallet
             locked_wallet.save(update_fields=["balance", "updated_at"])
+
+            cls._finalize_transaction(locked_txn, locked_wallet)
 
             # Send signals
             balance_changed.send(
@@ -411,6 +477,7 @@ class WalletService:
                 status=Transaction.STATUS_COMPLETED,
                 meta=reversal_meta,
             )
+            cls._finalize_transaction(reversal_txn, locked_wallet)
 
             locked_wallet.save(update_fields=["balance", "updated_at"])
 

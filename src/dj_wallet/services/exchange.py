@@ -5,6 +5,7 @@ from django.db import transaction
 
 from ..models import Transfer
 from .common import WalletService
+from ..utils import get_permission_policy
 
 
 class ExchangeService:
@@ -25,11 +26,15 @@ class ExchangeService:
         converted_amount = amount * Decimal(rate)
 
         with transaction.atomic():
+            PermissionPolicy = get_permission_policy()
+            PermissionPolicy().check(holder, from_wallet, "transfer", amount, {})
+
             # Withdraw from source
             withdraw_txn = WalletService.withdraw(
                 from_wallet,
                 amount,
                 meta={"exchange_rate": str(rate), "target": to_slug},
+                actor=holder,
             )
 
             # Deposit to target

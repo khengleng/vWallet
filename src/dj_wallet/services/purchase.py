@@ -2,6 +2,7 @@
 from ..exceptions import ProductNotAvailable
 from .common import WalletService
 from .transfer import TransferService
+from ..utils import get_permission_policy
 
 
 class PurchaseService:
@@ -16,6 +17,9 @@ class PurchaseService:
         cost = product.get_amount_product(customer) * quantity
         meta = product.get_meta_product()
 
+        PermissionPolicy = get_permission_policy()
+        PermissionPolicy().check(customer, customer.wallet, "purchase", cost, meta)
+
         # We assume the product might have a wallet to receive funds,
         # or the funds just disappear (burn).
         # If the product owner has a wallet:
@@ -23,4 +27,4 @@ class PurchaseService:
             return TransferService.transfer(customer, product, cost, meta)
         else:
             # Just withdraw (payment to system)
-            return WalletService.withdraw(customer.wallet, cost, meta)
+            return WalletService.withdraw(customer.wallet, cost, meta, actor=customer)

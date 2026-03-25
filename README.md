@@ -43,6 +43,10 @@ Think of this as a "digital balance system" inside your app. It doesn't handle r
 - **Polymorphic Holders**: Attach wallets to any Django model (Users, Organizations, Teams).
 - **Admin Panel Integration**: Full Django admin support for managing wallets, transactions, and transfers.
 - **Django Signals**: Hook into wallet events (deposits, withdrawals, transfers, etc.) for custom logic.
+- **Cryptographic Audit Trail**: Hash-chain of transactions and optional signatures.
+- **On-Chain Anchoring**: Create on-chain anchors for each completed transaction hash.
+- **Compliance & Role Limits**: Enforce KYC, limits, and role-based permissions.
+- **Optional API Layer**: REST endpoints for mobile integration (DRF).
 
 ---
 
@@ -50,6 +54,12 @@ Think of this as a "digital balance system" inside your app. It doesn't handle r
 
 ```bash
 pip install dj-wallet
+```
+
+For API support:
+
+```bash
+pip install dj-wallet[drf]
 ```
 
 Add to your `INSTALLED_APPS`:
@@ -65,6 +75,99 @@ Run migrations:
 
 ```bash
 python manage.py migrate
+```
+
+---
+
+## Hybrid Off-Chain + On-Chain Anchoring
+
+Every completed transaction is hashed (with `prev_tx_hash`) and can be anchored on-chain.
+This enables an auditable, tamper-evident ledger off-chain with on-chain proofs.
+
+### Configure Anchoring
+
+```python
+# settings.py
+dj_wallet = {
+    "ANCHOR_CHAIN_NAME": "polygon",  # or any chain label you use
+}
+
+# Optional: provide a chain adapter class
+DJ_WALLET_CHAIN_ADAPTER = "myapp.chain.PolygonAdapter"
+```
+
+To submit pending anchors:
+
+```bash
+python manage.py anchor_pending --limit 100
+```
+
+---
+
+## Permissions, Compliance, and Signing
+
+Permissions are tied to roles and balance. Compliance profiles are enforced automatically.
+Transactions are HMAC-signed by default (custodial) using `DJ_WALLET_SIGNING_SECRET`.
+
+```python
+# settings.py
+DJ_WALLET_SIGNING_SECRET = "change-me"
+
+dj_wallet = {
+    "PERMISSION_POLICY_CLASS": "dj_wallet.permissions.DefaultPermissionPolicy",
+    "SIGNATURE_SERVICE_CLASS": "dj_wallet.signature.SignatureService",
+}
+```
+
+### Role & Compliance Setup (example)
+
+```python
+from dj_wallet.models import WalletRole, WalletRoleAssignment, ComplianceProfile
+
+# Create a role with limits
+basic = WalletRole.objects.create(
+    slug="basic",
+    name="Basic User",
+    max_transfer_amount="5000",
+    daily_outflow_limit="20000",
+)
+
+# Assign role to a user
+WalletRoleAssignment.objects.create(holder=user, role=basic)
+
+# Compliance profile
+ComplianceProfile.objects.update_or_create(
+    holder=user,
+    defaults={"status": "verified", "risk_score": 12, "daily_limit": "25000"},
+)
+```
+
+---
+
+## Optional API Layer (Mobile)
+
+Enable DRF and include the API routes:
+
+```python
+# settings.py
+INSTALLED_APPS += ["rest_framework", "rest_framework.authtoken"]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "dj_wallet.api.throttles.BurstRateThrottle",
+        "dj_wallet.api.throttles.SustainedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "wallet_burst": "60/min",
+        "wallet_sustained": "1000/day",
+    },
+}
+
+# urls.py
+urlpatterns += [path("api/", include("dj_wallet.api.urls"))]
 ```
 
 ---
