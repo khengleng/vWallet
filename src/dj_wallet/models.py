@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
 from django.db import models
 
 from .abstract_models import AbstractTransaction, AbstractTransfer, AbstractWallet
@@ -109,6 +110,103 @@ class ChainAnchor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class IdempotencyKey(models.Model):
+    """
+    Idempotency tracking for API requests.
+    """
+
+    key = models.CharField(max_length=128, unique=True)
+    scope = models.CharField(max_length=64, default="wallet")
+    request_hash = models.CharField(max_length=64, blank=True, default="")
+    response_status = models.PositiveSmallIntegerField(null=True, blank=True)
+    response_body = models.JSONField(blank=True, null=True, default=dict)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class LedgerEntry(models.Model):
+    """
+    Immutable ledger entry (double-entry primitive).
+    """
+
+    ENTRY_DEBIT = "debit"
+    ENTRY_CREDIT = "credit"
+    ENTRY_CHOICES = (
+        (ENTRY_DEBIT, "Debit"),
+        (ENTRY_CREDIT, "Credit"),
+    )
+
+    transaction = models.ForeignKey(
+        Transaction, on_delete=models.CASCADE, related_name="ledger_entries"
+    )
+    wallet = models.ForeignKey(
+        Wallet, on_delete=models.CASCADE, related_name="ledger_entries"
+    )
+    entry_type = models.CharField(max_length=16, choices=ENTRY_CHOICES)
+    amount = models.DecimalField(
+        max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
+    )
+    balance_before = models.DecimalField(
+        max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
+    )
+    balance_after = models.DecimalField(
+        max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class ApprovalRequest(models.Model):
+    """
+    Approval workflow for high-risk actions.
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"),
+    )
+
+    action = models.CharField(max_length=32)
+    holder_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    holder_id = models.PositiveIntegerField()
+    holder = GenericForeignKey("holder_type", "holder_id")
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
+    amount = models.DecimalField(
+        max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
+    )
+    meta = models.JSONField(blank=True, null=True, default=dict)
+
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    reason = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approval_requests_created",
+    )
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approval_requests_resolved",
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
 class WalletRole(models.Model):
     """
     Role-based limits and permissions for wallet holders.
@@ -208,6 +306,60 @@ class ComplianceProfile(models.Model):
 
     flags = models.JSONField(blank=True, null=True, default=dict)
     notes = models.TextField(blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class SanctionedEntity(models.Model):
+    """
+    Simple sanctions/blocklist entry for holders.
+    """
+
+    holder_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    holder_id = models.PositiveIntegerField()
+    holder = GenericForeignKey("holder_type", "holder_id")
+
+    source = models.CharField(max_length=120, blank=True, default="manual")
+    reason = models.TextField(blank=True, default="")
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = (("holder_type", "holder_id", "source"),)
+
+
+class TransactionReview(models.Model):
+    """
+    Compliance review record for a transaction.
+    """
+
+    STATUS_OPEN = "open"
+    STATUS_CLEARED = "cleared"
+    STATUS_ESCALATED = "escalated"
+
+    STATUS_CHOICES = (
+        (STATUS_OPEN, "Open"),
+        (STATUS_CLEARED, "Cleared"),
+        (STATUS_ESCALATED, "Escalated"),
+    )
+
+    transaction = models.ForeignKey(
+        Transaction, on_delete=models.CASCADE, related_name="reviews"
+    )
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_OPEN
+    )
+    rule = models.CharField(max_length=64, blank=True, default="")
+    reason = models.TextField(blank=True, default="")
+    score = models.PositiveSmallIntegerField(default=0)
+
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

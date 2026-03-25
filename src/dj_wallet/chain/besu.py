@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from django.conf import settings
 
 from dj_wallet.anchor import ChainAdapter
+from dj_wallet.security.keys import get_chain_private_key
 
 
 class MissingDependency(RuntimeError):
@@ -58,7 +59,7 @@ class BesuAdapter(ChainAdapter):
     def _config(self):
         return BesuConfig(
             rpc_url=getattr(settings, "DJ_WALLET_CHAIN_RPC_URL", "http://127.0.0.1:8545"),
-            private_key=getattr(settings, "DJ_WALLET_CHAIN_PRIVATE_KEY", ""),
+            private_key=get_chain_private_key(allow_empty=True),
             contract_address=getattr(settings, "DJ_WALLET_ANCHOR_CONTRACT_ADDRESS", ""),
             chain_id=int(getattr(settings, "DJ_WALLET_CHAIN_ID", 0)),
             gas=int(getattr(settings, "DJ_WALLET_ANCHOR_GAS", 200000)),

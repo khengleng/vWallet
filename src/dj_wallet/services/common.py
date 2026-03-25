@@ -14,6 +14,7 @@ from ..exceptions import (
     WalletFrozen,
 )
 from ..models import Transaction, Wallet
+from ..models import LedgerEntry
 from ..signals import (
     balance_changed,
     pre_deposit,
@@ -100,6 +101,7 @@ class WalletService:
         with transaction.atomic():
             # Lock the wallet row to prevent concurrent modifications
             locked_wallet = Wallet.objects.select_for_update().get(pk=wallet.pk)
+            balance_before = locked_wallet.balance
 
             # Check if wallet is frozen
             cls._check_frozen(locked_wallet)
@@ -128,6 +130,14 @@ class WalletService:
             if confirmed:
                 locked_wallet.balance += amount
                 locked_wallet.save()
+                LedgerEntry.objects.create(
+                    transaction=txn,
+                    wallet=locked_wallet,
+                    entry_type=LedgerEntry.ENTRY_CREDIT,
+                    amount=amount,
+                    balance_before=balance_before,
+                    balance_after=locked_wallet.balance,
+                )
 
                 # Signal dispatching
                 balance_changed.send(sender=cls, wallet=locked_wallet, transaction=txn)
@@ -160,6 +170,7 @@ class WalletService:
 
         with transaction.atomic():
             locked_wallet = Wallet.objects.select_for_update().get(pk=wallet.pk)
+            balance_before = locked_wallet.balance
 
             # Check if wallet is frozen
             cls._check_frozen(locked_wallet)
@@ -199,6 +210,14 @@ class WalletService:
             if confirmed:
                 locked_wallet.balance -= amount
                 locked_wallet.save()
+                LedgerEntry.objects.create(
+                    transaction=txn,
+                    wallet=locked_wallet,
+                    entry_type=LedgerEntry.ENTRY_DEBIT,
+                    amount=amount,
+                    balance_before=balance_before,
+                    balance_after=locked_wallet.balance,
+                )
                 balance_changed.send(sender=cls, wallet=locked_wallet, transaction=txn)
 
             transaction_created.send(sender=cls, transaction=txn)
@@ -297,6 +316,15 @@ class WalletService:
                 SignatureService.sign(txn)
             AnchorService = get_anchor_service()
             AnchorService.ensure_anchor(txn)
+            # Compliance monitoring for completed transactions
+            from ..compliance import ComplianceService
+
+            ComplianceService.evaluate_transaction(txn)
+            # Audit hash + signature
+            from ..audit import AuditService
+
+            AuditService.attach_audit_hash(txn)
+            AuditService.sign_audit(txn)
 
     @classmethod
     def confirm_transaction(cls, txn, actor=None):

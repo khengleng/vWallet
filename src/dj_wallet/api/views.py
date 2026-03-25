@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
@@ -21,12 +24,16 @@ from dj_wallet.models import (
     CashAgent,
     CashRequest,
     ComplianceProfile,
+    IdempotencyKey,
+    ApprovalRequest,
     Transaction,
     TransferReceipt,
     WalletRole,
     WalletRoleAssignment,
 )
 from dj_wallet.user_signing import UserSigningService
+from dj_wallet.conf import wallet_settings
+from django.utils import timezone
 
 
 def _request_meta(request):
@@ -38,6 +45,45 @@ def _request_meta(request):
         "platform": request.META.get("HTTP_X_PLATFORM", ""),
         "ts": now().isoformat(),
     }
+
+
+def _idempotency_key(request):
+    return request.META.get("HTTP_IDEMPOTENCY_KEY", "").strip()
+
+
+def _idempotency_hash(payload):
+    data = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(data).hexdigest()
+
+
+def _idempotency_get_or_respond(request, scope, payload):
+    key = _idempotency_key(request)
+    if not key:
+        return None, None
+
+    req_hash = _idempotency_hash(payload)
+    record = IdempotencyKey.objects.filter(key=key).first()
+    if record:
+        if record.request_hash and record.request_hash != req_hash:
+            return Response({"detail": "idempotency_conflict"}, status=409), None
+        if record.response_status is not None:
+            return Response(record.response_body or {}, status=record.response_status), None
+        return None, record
+
+    record = IdempotencyKey.objects.create(
+        key=key, scope=scope, request_hash=req_hash
+    )
+    return None, record
+
+
+def _idempotency_store(record, response):
+    if record is None:
+        return response
+    record.response_status = response.status_code
+    if isinstance(response.data, dict):
+        record.response_body = response.data
+    record.save(update_fields=["response_status", "response_body", "updated_at"])
+    return response
 
 
 class BalanceView(APIView):
@@ -60,11 +106,18 @@ class DepositView(APIView):
         meta = data.get("meta") or {}
         meta.update(_request_meta(request))
 
+        idem_resp, idem_record = _idempotency_get_or_respond(
+            request, "deposit", {"amount": str(data["amount"]), "meta": meta}
+        )
+        if idem_resp:
+            return idem_resp
+
         txn = request.user.deposit(data["amount"], meta=meta, confirmed=True)
-        return Response(
+        resp = Response(
             {"transaction_id": str(txn.uuid), "balance": str(request.user.balance)},
             status=status.HTTP_201_CREATED,
         )
+        return _idempotency_store(idem_record, resp)
 
 
 class WithdrawView(APIView):
@@ -94,14 +147,50 @@ class WithdrawView(APIView):
         if not ok:
             return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
 
+        idem_resp, idem_record = _idempotency_get_or_respond(
+            request,
+            "withdraw",
+            {
+                "amount": str(data["amount"]),
+                "meta": meta,
+                "nonce": nonce,
+                "signature": signature,
+                "key_id": key_id,
+            },
+        )
+        if idem_resp:
+            return idem_resp
+
+        approval_threshold = wallet_settings.APPROVAL_WITHDRAW_THRESHOLD
+        if approval_threshold is not None and data["amount"] >= approval_threshold:
+            approval = ApprovalRequest.objects.create(
+                action="withdraw",
+                holder_type=ContentType.objects.get_for_model(request.user),
+                holder_id=request.user.pk,
+                wallet=request.user.wallet,
+                amount=data["amount"],
+                meta={
+                    "nonce": nonce,
+                    "signature": signature,
+                    "key_id": key_id,
+                },
+                created_by=request.user,
+            )
+            resp = Response(
+                {"status": "pending_approval", "approval_id": approval.id},
+                status=status.HTTP_202_ACCEPTED,
+            )
+            return _idempotency_store(idem_record, resp)
+
         txn = request.user.withdraw(data["amount"], meta=meta, confirmed=True)
         UserSigningService.attach_signature(
             txn, signature=signature, key_id=key_id, signer=request.user
         )
-        return Response(
+        resp = Response(
             {"transaction_id": str(txn.uuid), "balance": str(request.user.balance)},
             status=status.HTTP_201_CREATED,
         )
+        return _idempotency_store(idem_record, resp)
 
 
 class TransferView(APIView):
@@ -134,6 +223,43 @@ class TransferView(APIView):
         User = get_user_model()
         to_user = User.objects.get(pk=data["to_user_id"])
 
+        idem_resp, idem_record = _idempotency_get_or_respond(
+            request,
+            "transfer",
+            {
+                "to_user_id": data["to_user_id"],
+                "amount": str(data["amount"]),
+                "meta": meta,
+                "nonce": nonce,
+                "signature": signature,
+                "key_id": key_id,
+            },
+        )
+        if idem_resp:
+            return idem_resp
+
+        approval_threshold = wallet_settings.APPROVAL_TRANSFER_THRESHOLD
+        if approval_threshold is not None and data["amount"] >= approval_threshold:
+            approval = ApprovalRequest.objects.create(
+                action="transfer",
+                holder_type=ContentType.objects.get_for_model(request.user),
+                holder_id=request.user.pk,
+                wallet=request.user.wallet,
+                amount=data["amount"],
+                meta={
+                    "to_user_id": data["to_user_id"],
+                    "nonce": nonce,
+                    "signature": signature,
+                    "key_id": key_id,
+                },
+                created_by=request.user,
+            )
+            resp = Response(
+                {"status": "pending_approval", "approval_id": approval.id},
+                status=status.HTTP_202_ACCEPTED,
+            )
+            return _idempotency_store(idem_record, resp)
+
         transfer = request.user.transfer(to_user, data["amount"], meta=meta)
         # Attach signature to the withdraw txn
         UserSigningService.attach_signature(
@@ -145,7 +271,7 @@ class TransferView(APIView):
             if receipt:
                 receipt.note = data["note"]
                 receipt.save(update_fields=["note"])
-        return Response(
+        resp = Response(
             {
                 "transfer_id": str(transfer.uuid),
                 "balance": str(request.user.balance),
@@ -154,6 +280,7 @@ class TransferView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+        return _idempotency_store(idem_record, resp)
 
 
 class TransactionsView(APIView):
@@ -329,10 +456,19 @@ class CashInRequestView(APIView):
         if not agent:
             return Response({"detail": "agent_not_found"}, status=status.HTTP_400_BAD_REQUEST)
 
+        idem_resp, idem_record = _idempotency_get_or_respond(
+            request,
+            "cashin_request",
+            {"agent_code": data["agent_code"], "amount": str(data["amount"])},
+        )
+        if idem_resp:
+            return idem_resp
+
         cash_req = CashService.request_cashin(
             request.user, agent, data["amount"], meta=data.get("meta")
         )
-        return Response({"request_id": cash_req.id}, status=status.HTTP_201_CREATED)
+        resp = Response({"request_id": cash_req.id}, status=status.HTTP_201_CREATED)
+        return _idempotency_store(idem_record, resp)
 
 
 class CashOutRequestView(APIView):
@@ -348,10 +484,19 @@ class CashOutRequestView(APIView):
         if not agent:
             return Response({"detail": "agent_not_found"}, status=status.HTTP_400_BAD_REQUEST)
 
+        idem_resp, idem_record = _idempotency_get_or_respond(
+            request,
+            "cashout_request",
+            {"agent_code": data["agent_code"], "amount": str(data["amount"])},
+        )
+        if idem_resp:
+            return idem_resp
+
         cash_req = CashService.request_cashout(
             request.user, agent, data["amount"], meta=data.get("meta")
         )
-        return Response({"request_id": cash_req.id}, status=status.HTTP_201_CREATED)
+        resp = Response({"request_id": cash_req.id}, status=status.HTTP_201_CREATED)
+        return _idempotency_store(idem_record, resp)
 
 
 class CashApproveView(APIView):
@@ -383,4 +528,79 @@ class CashRejectView(APIView):
             from django.shortcuts import redirect
 
             return redirect("/api/")
+        return Response({"status": "rejected"})
+
+
+class ApprovalApproveView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    throttle_classes = [BurstRateThrottle, SustainedRateThrottle]
+
+    def post(self, request, approval_id):
+        approval = ApprovalRequest.objects.filter(pk=approval_id).first()
+        if not approval:
+            return Response({"detail": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+        if approval.status != ApprovalRequest.STATUS_PENDING:
+            return Response({"status": approval.status})
+
+        holder = approval.holder
+        meta = approval.meta or {}
+        nonce = meta.get("nonce")
+        signature = meta.get("signature")
+        key_id = meta.get("key_id")
+
+        if approval.action == "withdraw":
+            ok, reason = UserSigningService.verify(
+                holder, "withdraw", approval.amount, nonce, signature, key_id
+            )
+            if not ok:
+                return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
+            txn = holder.withdraw(approval.amount, meta={"approval_id": approval.id}, confirmed=True)
+            UserSigningService.attach_signature(
+                txn, signature=signature, key_id=key_id, signer=holder
+            )
+            approval.status = ApprovalRequest.STATUS_APPROVED
+            approval.resolved_by = request.user
+            approval.resolved_at = timezone.now()
+            approval.meta = {**meta, "transaction_id": str(txn.uuid)}
+            approval.save(update_fields=["status", "resolved_by", "resolved_at", "meta", "updated_at"])
+            return Response({"status": "approved", "transaction_id": str(txn.uuid)})
+
+        if approval.action == "transfer":
+            ok, reason = UserSigningService.verify(
+                holder, "transfer", approval.amount, nonce, signature, key_id
+            )
+            if not ok:
+                return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
+            User = get_user_model()
+            to_user = User.objects.get(pk=meta.get("to_user_id"))
+            transfer = holder.transfer(to_user, approval.amount, meta={"approval_id": approval.id})
+            UserSigningService.attach_signature(
+                transfer.withdraw, signature=signature, key_id=key_id, signer=holder
+            )
+            approval.status = ApprovalRequest.STATUS_APPROVED
+            approval.resolved_by = request.user
+            approval.resolved_at = timezone.now()
+            approval.meta = {**meta, "transfer_id": str(transfer.uuid)}
+            approval.save(update_fields=["status", "resolved_by", "resolved_at", "meta", "updated_at"])
+            return Response({"status": "approved", "transfer_id": str(transfer.uuid)})
+
+        return Response({"detail": "unsupported_action"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ApprovalRejectView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    throttle_classes = [BurstRateThrottle, SustainedRateThrottle]
+
+    def post(self, request, approval_id):
+        approval = ApprovalRequest.objects.filter(pk=approval_id).first()
+        if not approval:
+            return Response({"detail": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+        if approval.status != ApprovalRequest.STATUS_PENDING:
+            return Response({"status": approval.status})
+
+        approval.status = ApprovalRequest.STATUS_REJECTED
+        approval.reason = request.data.get("reason", "")
+        approval.resolved_by = request.user
+        approval.resolved_at = timezone.now()
+        approval.save(update_fields=["status", "reason", "resolved_by", "resolved_at", "updated_at"])
         return Response({"status": "rejected"})

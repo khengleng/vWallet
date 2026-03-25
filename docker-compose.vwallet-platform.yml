@@ -1,0 +1,240 @@
+services:
+  vwallet-web:
+    image: vwallet-web:local
+    container_name: vWallet-web
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: "*"
+      DJ_WALLET_SIGNING_SECRET: "dev-signing-secret-change-me"
+      DJ_WALLET_CHAIN_RPC_URL: "http://host.docker.internal:8545"
+      DJ_WALLET_CHAIN_ID: "20260321"
+      DJ_WALLET_ANCHOR_CONTRACT_ADDRESS: "0xC6d213e289d1F1aAe51E567DeaC4E5CE7e17ad23"
+      DJ_WALLET_CHAIN_PRIVATE_KEY: "REPLACE_ME"
+      DJANGO_DB_ENGINE: "django.db.backends.postgresql"
+      DJANGO_DB_NAME: "vwallet"
+      DJANGO_DB_USER: "bia_user"
+      DJANGO_DB_PASSWORD: "bia_secret_password"
+      DJANGO_DB_HOST: "vWallet-postgres"
+      DJANGO_DB_PORT: "5432"
+      CELERY_BROKER_URL: "redis://vWallet-redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://vWallet-redis:6379/1"
+    volumes:
+      - /Users/mlh/vWallet:/app
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz/').read()\""]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  vwallet-celery-worker:
+    image: vwallet-web:local
+    container_name: vWallet-celery-worker
+    command: ["celery", "-A", "vwallet_project", "worker", "-l", "info"]
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: "*"
+      DJ_WALLET_SIGNING_SECRET: "dev-signing-secret-change-me"
+      DJ_WALLET_CHAIN_RPC_URL: "http://host.docker.internal:8545"
+      DJ_WALLET_CHAIN_ID: "20260321"
+      DJ_WALLET_ANCHOR_CONTRACT_ADDRESS: "0xC6d213e289d1F1aAe51E567DeaC4E5CE7e17ad23"
+      DJ_WALLET_CHAIN_PRIVATE_KEY: "REPLACE_ME"
+      DJANGO_DB_ENGINE: "django.db.backends.postgresql"
+      DJANGO_DB_NAME: "vwallet"
+      DJANGO_DB_USER: "bia_user"
+      DJANGO_DB_PASSWORD: "bia_secret_password"
+      DJANGO_DB_HOST: "vWallet-postgres"
+      DJANGO_DB_PORT: "5432"
+      CELERY_BROKER_URL: "redis://vWallet-redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://vWallet-redis:6379/1"
+    volumes:
+      - /Users/mlh/vWallet:/app
+    depends_on:
+      - vwallet-redis
+      - vwallet-postgres
+    networks:
+      - default
+
+  vwallet-celery-beat:
+    image: vwallet-web:local
+    container_name: vWallet-celery-beat
+    command: ["celery", "-A", "vwallet_project", "beat", "-l", "info"]
+    environment:
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: "*"
+      DJ_WALLET_SIGNING_SECRET: "dev-signing-secret-change-me"
+      DJ_WALLET_CHAIN_RPC_URL: "http://host.docker.internal:8545"
+      DJ_WALLET_CHAIN_ID: "20260321"
+      DJ_WALLET_ANCHOR_CONTRACT_ADDRESS: "0xC6d213e289d1F1aAe51E567DeaC4E5CE7e17ad23"
+      DJ_WALLET_CHAIN_PRIVATE_KEY: "REPLACE_ME"
+      DJANGO_DB_ENGINE: "django.db.backends.postgresql"
+      DJANGO_DB_NAME: "vwallet"
+      DJANGO_DB_USER: "bia_user"
+      DJANGO_DB_PASSWORD: "bia_secret_password"
+      DJANGO_DB_HOST: "vWallet-postgres"
+      DJANGO_DB_PORT: "5432"
+      CELERY_BROKER_URL: "redis://vWallet-redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://vWallet-redis:6379/1"
+    volumes:
+      - /Users/mlh/vWallet:/app
+    depends_on:
+      - vwallet-redis
+      - vwallet-postgres
+    networks:
+      - default
+
+  vwallet-postgres-backup:
+    image: vwallet-postgres-tools:latest
+    container_name: vWallet-postgres-backup
+    environment:
+      PGPASSWORD: "bia_secret_password"
+    command:
+      [
+        "sh",
+        "-c",
+        "mkdir -p /backups && while true; do pg_dump -h vWallet-postgres -U bia_user -d vwallet > /backups/vwallet-$(date +%Y%m%d-%H%M%S).sql; sleep 3600; done"
+      ]
+    volumes:
+      - vwallet_backups:/backups
+    depends_on:
+      - vwallet-postgres
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "ls /backups | grep vwallet- >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  vwallet-postgres:
+    image: vwallet-postgres:latest
+    container_name: vWallet-postgres
+    command: ["postgres"]
+    environment:
+      POSTGRES_USER: "bia_user"
+      POSTGRES_PASSWORD: "bia_secret_password"
+      POSTGRES_DB: "bia_development"
+    volumes:
+      - boutique-advisory-platform_postgres_data:/var/lib/postgresql/data:rw
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - default
+      - boutique-advisory-platform_bia-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bia_user -d vwallet"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  vwallet-redis:
+    image: vwallet-redis:7-alpine
+    container_name: vWallet-redis
+    command: ["redis-server"]
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - default
+      - boutique-advisory-platform_bia-network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  vwallet-besu-bootnode:
+    image: vwallet-besu-bootnode:local
+    container_name: vWallet-besu-bootnode
+    entrypoint: ["/opt/besu/entrypoint.sh"]
+    environment:
+      BESU_NODE_PRIVATE_KEY: "0x5ebb614593c5a785ace1f4d989df54eb621950cb7eff4e70339b7c0c41d27a6d"
+      BESU_P2P_HOST: "172.25.0.10"
+      BESU_DISCOVERY_ENABLED: "true"
+      BESU_V5_DISCOVERY_ENABLED: "true"
+      BESU_RPC_HTTP_HOST: "0.0.0.0"
+      BESU_RPC_WS_HOST: "0.0.0.0"
+      BESU_GRAPHQL_HTTP_HOST: "0.0.0.0"
+      BESU_PID_PATH: "/tmp/pid"
+      BESU_USER_NAME: "besu"
+      BESU_ROLE: "bootnode"
+    networks:
+      besu_besu-net:
+        ipv4_address: 172.25.0.10
+
+  vwallet-besu-validator1:
+    image: vwallet-besu-validator1:local
+    container_name: vWallet-besu-validator1
+    entrypoint: ["/opt/besu/entrypoint.sh"]
+    environment:
+      BESU_V5_DISCOVERY_ENABLED: "true"
+      BESU_NODE_PRIVATE_KEY: "0x3bfeb54e378a8a5a9382aada18ec42f5dc1fd04093020a7923fe957afb3e0936"
+      BESU_P2P_HOST: "172.25.0.11"
+      BESU_DISCOVERY_ENABLED: "true"
+      BESU_RPC_HTTP_HOST: "0.0.0.0"
+      BESU_RPC_WS_HOST: "0.0.0.0"
+      BESU_GRAPHQL_HTTP_HOST: "0.0.0.0"
+      BESU_PID_PATH: "/tmp/pid"
+      BESU_USER_NAME: "besu"
+      BESU_ROLE: "validator"
+    networks:
+      besu_besu-net:
+        ipv4_address: 172.25.0.11
+
+  vwallet-besu-validator2:
+    image: vwallet-besu-validator2:local
+    container_name: vWallet-besu-validator2
+    entrypoint: ["/opt/besu/entrypoint.sh"]
+    environment:
+      BESU_NODE_PRIVATE_KEY: "0x4d2d5a5a716ea71868ad6bb6bcc527e4f7b36fd3417c994693f37eb743b969ff"
+      BESU_P2P_HOST: "172.25.0.12"
+      BESU_DISCOVERY_ENABLED: "true"
+      BESU_V5_DISCOVERY_ENABLED: "true"
+      BESU_RPC_HTTP_HOST: "0.0.0.0"
+      BESU_RPC_WS_HOST: "0.0.0.0"
+      BESU_GRAPHQL_HTTP_HOST: "0.0.0.0"
+      BESU_PID_PATH: "/tmp/pid"
+      BESU_USER_NAME: "besu"
+      BESU_ROLE: "validator"
+    networks:
+      besu_besu-net:
+        ipv4_address: 172.25.0.12
+
+  vwallet-besu-rpc:
+    image: vwallet-besu-rpc:local
+    container_name: vWallet-besu-rpc
+    entrypoint: ["/opt/besu/entrypoint.sh"]
+    environment:
+      BESU_V5_DISCOVERY_ENABLED: "true"
+      BESU_RPC_HTTP_ENABLED: "true"
+      BESU_RPC_HTTP_PORT: "8545"
+      BESU_NODE_PRIVATE_KEY: "0x8789f919b3222f47495a1fd01968acd8c9ca04be4df68ee6a301c67802153709"
+      BESU_P2P_HOST: "172.25.0.13"
+      BESU_DISCOVERY_ENABLED: "true"
+      BESU_RPC_HTTP_HOST: "0.0.0.0"
+      BESU_RPC_WS_HOST: "0.0.0.0"
+      BESU_GRAPHQL_HTTP_HOST: "0.0.0.0"
+      BESU_PID_PATH: "/tmp/pid"
+      BESU_USER_NAME: "besu"
+      BESU_ROLE: "rpc"
+    ports:
+      - "8545:8545"
+    networks:
+      besu_besu-net:
+        ipv4_address: 172.25.0.13
+
+networks:
+  besu_besu-net:
+    external: true
+  boutique-advisory-platform_bia-network:
+    external: true
+
+volumes:
+  boutique-advisory-platform_postgres_data:
+    external: true
+  vwallet_backups:

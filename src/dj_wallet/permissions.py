@@ -32,6 +32,8 @@ class DefaultPermissionPolicy(PermissionPolicy):
 
         # Compliance gating
         profile = ComplianceService.get_profile(holder)
+        if not ComplianceService.check_sanctions(holder):
+            raise PermissionDenied("sanctions_blocked")
         if profile.is_suspended:
             raise PermissionDenied("account_suspended")
 

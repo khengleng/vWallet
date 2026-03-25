@@ -132,3 +132,12 @@ def portal_cash_view(request):
         "dj_wallet/portal_cash.html",
         _base_context(request),
     )
+
+
+@login_required
+def portal_docs_view(request):
+    return render(
+        request,
+        "dj_wallet/portal_docs.html",
+        _base_context(request),
+    )

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vWallet API Docs</title>
+    <style>
+      :root {
+        --bg: #f6f4f1;
+        --ink: #121212;
+        --accent: #0b4b6f;
+        --card: #ffffff;
+        --muted: #6b6b6b;
+        --border: #e6e1db;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, #fff1d1, transparent),
+                    radial-gradient(1200px 600px at 90% -10%, #d7f1ff, transparent),
+                    var(--bg);
+        color: var(--ink);
+      }
+      header {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand { font-weight: 700; letter-spacing: 0.04em; }
+      .nav a { margin-left: 12px; color: var(--accent); text-decoration: none; font-weight: 600; }
+      .container { padding: 0 20px 40px; max-width: 1000px; margin: 0 auto; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      code { background: #f3f1ee; padding: 2px 6px; border-radius: 6px; }
+      pre {
+        background: #0f1b26;
+        color: #e8f1f7;
+        padding: 12px;
+        border-radius: 10px;
+        overflow-x: auto;
+      }
+      .muted { color: var(--muted); }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+      th { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">vWallet</div>
+      <nav class="nav">
+        <a href="/api/">Dashboard</a>
+        <a href="/api/portal/balances">Balances</a>
+        <a href="/api/portal/anchors">Anchors</a>
+        <a href="/api/portal/cash">Cash</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <h2>Mobile API Docs</h2>
+        <p class="muted">Base URL: <code>/api</code></p>
+      </div>
+
+      <div class="card">
+        <h3>Auth</h3>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td>POST</td><td><code>/auth/register</code></td><td>Create user</td></tr>
+            <tr><td>POST</td><td><code>/auth/token</code></td><td>Get auth token</td></tr>
+          </tbody>
+        </table>
+<pre>POST /api/auth/token
+{"username":"user","password":"WingBank@123$"}</pre>
+      </div>
+
+      <div class="card">
+        <h3>Wallet</h3>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td><code>/wallet/balance</code></td><td>Balance</td></tr>
+            <tr><td>POST</td><td><code>/wallet/deposit</code></td><td>Deposit</td></tr>
+            <tr><td>POST</td><td><code>/wallet/withdraw</code></td><td>Withdraw (signed)</td></tr>
+            <tr><td>POST</td><td><code>/wallet/transfer</code></td><td>Transfer (signed)</td></tr>
+            <tr><td>POST</td><td><code>/wallet/nonce</code></td><td>Get signing nonce</td></tr>
+            <tr><td>GET</td><td><code>/wallet/transactions</code></td><td>Transaction list</td></tr>
+            <tr><td>GET</td><td><code>/wallet/statement</code></td><td>Statement</td></tr>
+          </tbody>
+        </table>
+<pre>POST /api/wallet/deposit
+Authorization: Token &lt;TOKEN&gt;
+{"amount":"10.00","meta":{"action":"mobile_deposit"}}</pre>
+      </div>
+
+      <div class="card">
+        <h3>Cash</h3>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td>POST</td><td><code>/cashin/request</code></td><td>Request cash-in</td></tr>
+            <tr><td>POST</td><td><code>/cashout/request</code></td><td>Request cash-out</td></tr>
+            <tr><td>POST</td><td><code>/cash/approve/&lt;id&gt;</code></td><td>Approve request</td></tr>
+            <tr><td>POST</td><td><code>/cash/reject/&lt;id&gt;</code></td><td>Reject request</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Funding Sources</h3>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td><code>/wallet/funding-sources</code></td><td>List sources</td></tr>
+            <tr><td>POST</td><td><code>/wallet/funding-sources</code></td><td>Add source</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Signed Actions</h3>
+        <p class="muted">For withdraw/transfer, sign this payload with the holder key:</p>
+<pre>{
+  "holder_id": &lt;USER_ID&gt;,
+  "holder_type": "auth.user",
+  "action": "transfer",
+  "amount": "1.00000000",
+  "nonce": "&lt;NONCE&gt;"
+}</pre>
+        <p class="muted">Then send:</p>
+<pre>POST /api/wallet/transfer
+Authorization: Token &lt;TOKEN&gt;
+{"to_user_id":1,"amount":"1.00000000","nonce":"...","signature":"0x...","key_id":"user-0x..."}</pre>
+      </div>
+    </div>
+  </body>
+</html>

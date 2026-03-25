@@ -2,6 +2,7 @@ from django.urls import path
 from dj_wallet.portal import (
     portal_balances_view,
     portal_cash_view,
+    portal_docs_view,
     portal_anchors_view,
     portal_view,
 )
@@ -13,6 +14,7 @@ urlpatterns = [
     path("portal/balances", portal_balances_view, name="portal-balances"),
     path("portal/anchors", portal_anchors_view, name="portal-anchors"),
     path("portal/cash", portal_cash_view, name="portal-cash"),
+    path("portal/docs", portal_docs_view, name="portal-docs"),
     path("wallet/balance", views.BalanceView.as_view(), name="wallet-balance"),
     path("wallet/nonce", views.NonceView.as_view(), name="wallet-nonce"),
     path("wallet/deposit", views.DepositView.as_view(), name="wallet-deposit"),
@@ -34,5 +36,15 @@ urlpatterns = [
         "cash/reject/<int:request_id>",
         views.CashRejectView.as_view(),
         name="cash-reject",
+    ),
+    path(
+        "approvals/approve/<int:approval_id>",
+        views.ApprovalApproveView.as_view(),
+        name="approval-approve",
+    ),
+    path(
+        "approvals/reject/<int:approval_id>",
+        views.ApprovalRejectView.as_view(),
+        name="approval-reject",
     ),
 ]

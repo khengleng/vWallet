@@ -11,6 +11,10 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
 DJ_WALLET_SIGNING_SECRET = os.environ.get(
     "DJ_WALLET_SIGNING_SECRET", "dev-signing-secret-change-me"
 )
+DJ_WALLET_KEY_PROVIDER = os.environ.get(
+    "DJ_WALLET_KEY_PROVIDER", "dj_wallet.security.keys.EnvKeyProvider"
+)
+DJ_WALLET_SIGN_AUDIT = os.environ.get("DJ_WALLET_SIGN_AUDIT", "1") == "1"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -57,8 +61,12 @@ ASGI_APPLICATION = "vwallet_project.asgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": os.environ.get("DJANGO_DB_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("DJANGO_DB_NAME", str(BASE_DIR / "db.sqlite3")),
+        "USER": os.environ.get("DJANGO_DB_USER", ""),
+        "PASSWORD": os.environ.get("DJANGO_DB_PASSWORD", ""),
+        "HOST": os.environ.get("DJANGO_DB_HOST", ""),
+        "PORT": os.environ.get("DJANGO_DB_PORT", ""),
     }
 }
 
@@ -76,6 +84,27 @@ CSRF_FAILURE_VIEW = "dj_wallet.csrf.csrf_failure"
 
 STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        }
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+    },
+}
 
 # DRF
 REST_FRAMEWORK = {

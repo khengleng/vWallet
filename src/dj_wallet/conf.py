@@ -35,9 +35,26 @@ class WalletSettings:
 
     # On-chain anchoring defaults
     ANCHOR_CHAIN_NAME: str = "devnet"
+    ANCHOR_BATCH_SIZE: int = 100
 
     # Compliance enforcement
     COMPLIANCE_REQUIRE_KYC: list = None  # actions requiring verified KYC
+
+    # Compliance monitoring thresholds
+    COMPLIANCE_ALERT_AMOUNT: int = 10000
+    COMPLIANCE_VELOCITY_WINDOW_MIN: int = 60
+    COMPLIANCE_VELOCITY_COUNT: int = 20
+
+    # Fraud heuristics
+    FRAUD_VELOCITY_WINDOW_MIN: int = 60
+    FRAUD_WITHDRAW_COUNT: int = 20
+    FRAUD_TRANSFER_COUNT: int = 20
+    FRAUD_REQUIRE_DEVICE_ID: bool = True
+    FRAUD_BLOCKED_IPS: list = None
+
+    # Approval matrix thresholds (None disables)
+    APPROVAL_WITHDRAW_THRESHOLD: int = 5000
+    APPROVAL_TRANSFER_THRESHOLD: int = 5000
 
     # Transaction expiration settings
     PENDING_TRANSACTION_EXPIRY_HOURS: int = (
@@ -67,6 +84,8 @@ class WalletSettings:
         """
         if self.COMPLIANCE_REQUIRE_KYC is None:
             self.COMPLIANCE_REQUIRE_KYC = ["withdraw", "transfer", "purchase"]
+        if self.FRAUD_BLOCKED_IPS is None:
+            self.FRAUD_BLOCKED_IPS = []
 
         if not isinstance(self.COMPLIANCE_REQUIRE_KYC, list):
             raise ImproperlyConfigured(
@@ -83,6 +102,36 @@ class WalletSettings:
             raise ImproperlyConfigured(
                 "dj_wallet['MATH_SCALE'] must be at most 30. "
                 f"Got: {self.WALLET_MATH_SCALE}"
+            )
+
+        # Validate compliance thresholds
+        if (
+            self.COMPLIANCE_ALERT_AMOUNT is not None
+            and self.COMPLIANCE_ALERT_AMOUNT < 0
+        ):
+            raise ImproperlyConfigured(
+                "dj_wallet['COMPLIANCE_ALERT_AMOUNT'] must be >= 0."
+            )
+        if self.COMPLIANCE_VELOCITY_WINDOW_MIN <= 0:
+            raise ImproperlyConfigured(
+                "dj_wallet['COMPLIANCE_VELOCITY_WINDOW_MIN'] must be > 0."
+            )
+        if self.COMPLIANCE_VELOCITY_COUNT <= 0:
+            raise ImproperlyConfigured(
+                "dj_wallet['COMPLIANCE_VELOCITY_COUNT'] must be > 0."
+            )
+
+        if self.FRAUD_VELOCITY_WINDOW_MIN <= 0:
+            raise ImproperlyConfigured(
+                "dj_wallet['FRAUD_VELOCITY_WINDOW_MIN'] must be > 0."
+            )
+        if self.FRAUD_WITHDRAW_COUNT <= 0:
+            raise ImproperlyConfigured(
+                "dj_wallet['FRAUD_WITHDRAW_COUNT'] must be > 0."
+            )
+        if self.FRAUD_TRANSFER_COUNT <= 0:
+            raise ImproperlyConfigured(
+                "dj_wallet['FRAUD_TRANSFER_COUNT'] must be > 0."
             )
 
         # Validate DEFAULT_CURRENCY

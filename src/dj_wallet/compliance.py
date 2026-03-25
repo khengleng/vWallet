@@ -5,7 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Sum
 from django.utils import timezone
 
-from .models import ComplianceProfile, Transaction, Wallet
+from .conf import wallet_settings
+from .models import ComplianceProfile, SanctionedEntity, Transaction, TransactionReview, Wallet
 
 
 class ComplianceService:
@@ -49,6 +50,14 @@ class ComplianceService:
         return profile
 
     @staticmethod
+    def check_sanctions(holder):
+        ct = ContentType.objects.get_for_model(holder)
+        blocked = SanctionedEntity.objects.filter(
+            holder_type=ct, holder_id=holder.pk, is_active=True
+        ).exists()
+        return not blocked
+
+    @staticmethod
     def sum_outflow(holder, since):
         ct = ContentType.objects.get_for_model(holder)
         wallets = Wallet.objects.filter(holder_type=ct, holder_id=holder.pk)
@@ -72,3 +81,57 @@ class ComplianceService:
     def monthly_outflow(cls, holder):
         since = timezone.now() - timedelta(days=30)
         return cls.sum_outflow(holder, since)
+
+    @classmethod
+    def _velocity_count(cls, holder):
+        window = wallet_settings.COMPLIANCE_VELOCITY_WINDOW_MIN
+        since = timezone.now() - timedelta(minutes=window)
+        ct = ContentType.objects.get_for_model(holder)
+        wallets = Wallet.objects.filter(holder_type=ct, holder_id=holder.pk)
+        return Transaction.objects.filter(
+            wallet__in=wallets, confirmed=True, created_at__gte=since
+        ).count()
+
+    @classmethod
+    def evaluate_transaction(cls, txn):
+        """
+        Create compliance review records for notable activity.
+        """
+        holder = txn.payable
+        if holder is None:
+            return None
+
+        reviews = []
+        amount = Decimal(str(txn.amount))
+
+        # Large transaction threshold
+        if (
+            wallet_settings.COMPLIANCE_ALERT_AMOUNT is not None
+            and amount >= wallet_settings.COMPLIANCE_ALERT_AMOUNT
+        ):
+            reviews.append(
+                TransactionReview(
+                    transaction=txn,
+                    rule="amount_threshold",
+                    reason="amount_exceeds_threshold",
+                    score=50,
+                )
+            )
+
+        # Velocity threshold
+        if (
+            wallet_settings.COMPLIANCE_VELOCITY_COUNT is not None
+            and cls._velocity_count(holder) >= wallet_settings.COMPLIANCE_VELOCITY_COUNT
+        ):
+            reviews.append(
+                TransactionReview(
+                    transaction=txn,
+                    rule="velocity_threshold",
+                    reason="velocity_exceeds_threshold",
+                    score=40,
+                )
+            )
+
+        if reviews:
+            TransactionReview.objects.bulk_create(reviews)
+        return reviews

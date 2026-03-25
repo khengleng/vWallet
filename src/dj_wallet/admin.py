@@ -4,12 +4,17 @@ from django.contrib import admin
 from .models import (
     ChainAnchor,
     ComplianceProfile,
+    SanctionedEntity,
+    TransactionReview,
     HolderKey,
     SignatureNonce,
     CashAgent,
     CashRequest,
     TransferReceipt,
     FundingSource,
+    LedgerEntry,
+    IdempotencyKey,
+    ApprovalRequest,
     Transaction,
     TransactionSignature,
     Transfer,
@@ -58,6 +63,26 @@ class ChainAnchorAdmin(admin.ModelAdmin):
     list_filter = ("chain", "status")
 
 
+@admin.register(LedgerEntry)
+class LedgerEntryAdmin(admin.ModelAdmin):
+    list_display = ("transaction", "wallet", "entry_type", "amount", "created_at")
+    list_filter = ("entry_type",)
+    search_fields = ("transaction__uuid", "wallet__uuid")
+
+
+@admin.register(IdempotencyKey)
+class IdempotencyKeyAdmin(admin.ModelAdmin):
+    list_display = ("key", "scope", "response_status", "created_at")
+    search_fields = ("key",)
+
+
+@admin.register(ApprovalRequest)
+class ApprovalRequestAdmin(admin.ModelAdmin):
+    list_display = ("action", "holder_type", "holder_id", "amount", "status", "created_at")
+    list_filter = ("action", "status")
+    search_fields = ("holder_id",)
+
+
 @admin.register(WalletRole)
 class WalletRoleAdmin(admin.ModelAdmin):
     list_display = ("slug", "name")
@@ -74,6 +99,20 @@ class WalletRoleAssignmentAdmin(admin.ModelAdmin):
 class ComplianceProfileAdmin(admin.ModelAdmin):
     list_display = ("holder_type", "holder_id", "status", "risk_score", "is_suspended")
     list_filter = ("status", "is_suspended")
+
+
+@admin.register(SanctionedEntity)
+class SanctionedEntityAdmin(admin.ModelAdmin):
+    list_display = ("holder_type", "holder_id", "source", "is_active", "created_at")
+    list_filter = ("source", "is_active")
+    search_fields = ("holder_id",)
+
+
+@admin.register(TransactionReview)
+class TransactionReviewAdmin(admin.ModelAdmin):
+    list_display = ("transaction", "status", "rule", "score", "created_at")
+    list_filter = ("status", "rule")
+    search_fields = ("transaction__uuid", "rule")
 
 
 @admin.register(HolderKey)

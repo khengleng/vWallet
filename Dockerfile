@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED=1
 COPY pyproject.toml poetry.lock /app/
 
 RUN pip install --no-cache-dir pip setuptools wheel
-RUN pip install --no-cache-dir django djangorestframework celery redis web3 eth-account
+RUN pip install --no-cache-dir django djangorestframework celery redis web3 eth-account psycopg2-binary
 
 COPY . /app
 RUN pip install -e /app

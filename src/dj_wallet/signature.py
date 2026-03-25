@@ -2,10 +2,9 @@ import hmac
 import json
 from hashlib import sha256
 
-from django.conf import settings
-
 from .crypto import _normalize_value
 from .models import TransactionSignature
+from .security.keys import get_app_signing_secret
 
 
 class SignatureService:
@@ -17,10 +16,7 @@ class SignatureService:
 
     @staticmethod
     def _get_secret():
-        secret = getattr(settings, "DJ_WALLET_SIGNING_SECRET", "")
-        if not secret:
-            raise RuntimeError("DJ_WALLET_SIGNING_SECRET is not set")
-        return secret.encode("utf-8")
+        return get_app_signing_secret().encode("utf-8")
 
     @staticmethod
     def _payload(txn):
