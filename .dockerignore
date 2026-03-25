@@ -1,0 +1,12 @@
+.git
+.venv
+.venv-besu
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.DS_Store
+db.sqlite3
+coverage.json

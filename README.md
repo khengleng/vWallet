@@ -62,6 +62,24 @@ For API support:
 pip install dj-wallet[drf]
 ```
 
+For on-chain anchoring (Besu adapter):
+
+```bash
+pip install dj-wallet[chain]
+```
+
+For user-signing verification:
+
+```bash
+pip install dj-wallet[signing]
+```
+
+For queue-based workers:
+
+```bash
+pip install dj-wallet[queue]
+```
+
 Add to your `INSTALLED_APPS`:
 
 ```python
@@ -94,12 +112,66 @@ dj_wallet = {
 
 # Optional: provide a chain adapter class
 DJ_WALLET_CHAIN_ADAPTER = "myapp.chain.PolygonAdapter"
+
+# Besu adapter example
+DJ_WALLET_CHAIN_ADAPTER = "dj_wallet.chain.besu.BesuAdapter"
+DJ_WALLET_CHAIN_RPC_URL = "http://127.0.0.1:8545"
+DJ_WALLET_CHAIN_ID = 20260321
+DJ_WALLET_ANCHOR_CONTRACT_ADDRESS = "0xYourAnchorContract"
+DJ_WALLET_CHAIN_PRIVATE_KEY = "0x..."
 ```
+
+### Anchor Contract
+
+A minimal Solidity contract is provided at `contracts/AnchorRegistry.sol`.
+Deploy it to your Besu network and set `DJ_WALLET_ANCHOR_CONTRACT_ADDRESS`.
 
 To submit pending anchors:
 
 ```bash
 python manage.py anchor_pending --limit 100
+```
+
+To confirm submitted anchors:
+
+```bash
+python manage.py anchor_confirm --limit 100
+```
+
+---
+
+## Queue-Based Anchoring (Celery + Redis)
+
+Add a Celery app in your project and schedule the tasks:
+
+```python
+# myapp/celery.py
+import os
+from celery import Celery
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myapp.settings")
+app = Celery("myapp")
+app.config_from_object("django.conf:settings", namespace="CELERY")
+app.autodiscover_tasks()
+```
+
+```python
+# settings.py
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+
+CELERY_BEAT_SCHEDULE = {
+    "anchor-pending-every-10s": {
+        "task": "dj_wallet.tasks.submit_pending_anchors",
+        "schedule": 10.0,
+        "args": (100,),
+    },
+    "anchor-confirm-every-20s": {
+        "task": "dj_wallet.tasks.confirm_submitted_anchors",
+        "schedule": 20.0,
+        "args": (100,),
+    },
+}
 ```
 
 ---
@@ -116,6 +188,7 @@ DJ_WALLET_SIGNING_SECRET = "change-me"
 dj_wallet = {
     "PERMISSION_POLICY_CLASS": "dj_wallet.permissions.DefaultPermissionPolicy",
     "SIGNATURE_SERVICE_CLASS": "dj_wallet.signature.SignatureService",
+    "COMPLIANCE_REQUIRE_KYC": ["withdraw", "transfer", "purchase"],
 }
 ```
 
@@ -166,9 +239,130 @@ REST_FRAMEWORK = {
     },
 }
 
+# Recommended headers from mobile clients:
+# X-Device-Id, X-App-Version, X-Platform
+
 # urls.py
 urlpatterns += [path("api/", include("dj_wallet.api.urls"))]
 ```
+
+### Onboarding (Register)
+
+```http
+POST /api/auth/register
+{
+  "username": "user1",
+  "email": "user1@example.com",
+  "password": "StrongPass123!"
+}
+```
+
+Creates a user, a pending compliance profile, and assigns the `basic` role if it exists.
+
+### Token Login
+
+```http
+POST /api/auth/token
+{
+  "username": "user1",
+  "password": "StrongPass123!"
+}
+```
+
+---
+
+## Portal
+
+Open the mobile money portal:
+
+`http://localhost:8000/api/`
+
+---
+
+## Cash-In / Cash-Out (Agent Approval)
+
+```http
+POST /api/cashin/request
+{ "agent_code": "AGENT-001", "amount": "50.00" }
+```
+
+```http
+POST /api/cashout/request
+{ "agent_code": "AGENT-001", "amount": "25.00" }
+```
+
+Admin approval endpoints:
+
+```http
+POST /api/cash/approve/<request_id>
+POST /api/cash/reject/<request_id>
+```
+
+---
+
+## P2P Transfers + Receipts
+
+```http
+POST /api/wallet/transfer
+{
+  "to_user_id": 2,
+  "amount": "5.00",
+  "note": "Lunch"
+}
+```
+
+Response includes `receipt` reference.
+
+---
+
+## Statements
+
+```http
+GET /api/wallet/statement?from_date=2026-03-01&to_date=2026-03-25
+```
+
+---
+
+## Funding Sources (Bank/ABA placeholders)
+
+```http
+POST /api/wallet/funding-sources
+{
+  "type": "aba",
+  "label": "ABA Main",
+  "account_ref": "ABA-123456"
+}
+```
+
+```http
+GET /api/wallet/funding-sources
+```
+
+---
+
+## Agent Onboarding (Admin)
+
+```http
+POST /api/agents/onboard
+{
+  "user_id": 2,
+  "code": "AGENT-001"
+}
+```
+
+### User Signing (Mobile)
+
+This API requires a signature for withdraw and transfer operations.
+1. Request a nonce: `POST /api/wallet/nonce`
+2. Sign the payload (JSON):
+
+```json
+{"holder_id": 123, "holder_type": "auth.user", "action": "withdraw", "amount": "10.00", "nonce": "<nonce>"}
+```
+
+3. Send `nonce`, `signature`, and `key_id` with the request.
+
+Register user public keys using the `HolderKey` model.
 
 ---
 

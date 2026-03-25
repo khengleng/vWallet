@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from .compliance import ComplianceService
 from .fraud import FraudService
 from .models import WalletRoleAssignment
+from .conf import wallet_settings
 
 
 class PermissionDenied(Exception):
@@ -36,6 +37,10 @@ class DefaultPermissionPolicy(PermissionPolicy):
 
         if profile.status == profile.STATUS_REJECTED:
             raise PermissionDenied("kyc_rejected")
+
+        if action in wallet_settings.COMPLIANCE_REQUIRE_KYC:
+            if profile.status != profile.STATUS_VERIFIED:
+                raise PermissionDenied("kyc_required")
 
         # Fraud heuristics
         allowed, reason = FraudService.evaluate(holder, action, amount, meta)

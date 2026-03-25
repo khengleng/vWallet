@@ -4,6 +4,12 @@ from django.contrib import admin
 from .models import (
     ChainAnchor,
     ComplianceProfile,
+    HolderKey,
+    SignatureNonce,
+    CashAgent,
+    CashRequest,
+    TransferReceipt,
+    FundingSource,
     Transaction,
     TransactionSignature,
     Transfer,
@@ -68,3 +74,42 @@ class WalletRoleAssignmentAdmin(admin.ModelAdmin):
 class ComplianceProfileAdmin(admin.ModelAdmin):
     list_display = ("holder_type", "holder_id", "status", "risk_score", "is_suspended")
     list_filter = ("status", "is_suspended")
+
+
+@admin.register(HolderKey)
+class HolderKeyAdmin(admin.ModelAdmin):
+    list_display = ("key_id", "holder_type", "holder_id", "scheme", "is_active")
+    search_fields = ("key_id", "public_key")
+    list_filter = ("scheme", "is_active")
+
+
+@admin.register(SignatureNonce)
+class SignatureNonceAdmin(admin.ModelAdmin):
+    list_display = ("nonce", "holder_type", "holder_id", "used_at", "expires_at")
+    search_fields = ("nonce",)
+
+
+@admin.register(CashAgent)
+class CashAgentAdmin(admin.ModelAdmin):
+    list_display = ("code", "holder_type", "holder_id", "is_active")
+    search_fields = ("code",)
+    list_filter = ("is_active",)
+
+
+@admin.register(CashRequest)
+class CashRequestAdmin(admin.ModelAdmin):
+    list_display = ("type", "status", "amount", "agent", "holder_type", "holder_id")
+    list_filter = ("type", "status")
+
+
+@admin.register(TransferReceipt)
+class TransferReceiptAdmin(admin.ModelAdmin):
+    list_display = ("reference", "transfer", "created_at")
+    search_fields = ("reference",)
+
+
+@admin.register(FundingSource)
+class FundingSourceAdmin(admin.ModelAdmin):
+    list_display = ("type", "label", "holder_type", "holder_id", "is_active")
+    list_filter = ("type", "is_active")
+    search_fields = ("label", "account_ref")

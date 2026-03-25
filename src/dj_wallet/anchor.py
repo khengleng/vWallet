@@ -35,6 +35,10 @@ class AnchorService:
         adapter = getattr(settings, "DJ_WALLET_CHAIN_ADAPTER", None)
         if adapter is None:
             return NoopChainAdapter()
+        if isinstance(adapter, str):
+            from django.utils.module_loading import import_string
+
+            adapter = import_string(adapter)
         return adapter()
 
     @staticmethod

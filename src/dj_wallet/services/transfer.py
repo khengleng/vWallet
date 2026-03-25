@@ -10,6 +10,7 @@ from ..models import Transfer
 from ..signals import transfer_completed
 from .common import WalletService
 from ..utils import get_permission_policy
+from ..receipts import ReceiptService
 
 
 class TransferService:
@@ -94,6 +95,9 @@ class TransferService:
                 from_wallet=sender_wallet,
                 to_wallet=receiver_wallet,
             )
+
+            # Generate receipt
+            ReceiptService.create_for_transfer(transfer_record)
 
             return transfer_record
 

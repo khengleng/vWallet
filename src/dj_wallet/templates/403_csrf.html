@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Session Expired</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        background: #f6f4f1;
+        color: #121212;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .card {
+        max-width: 520px;
+        background: #fff;
+        border: 1px solid #e6e1db;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      }
+      .muted { color: #6b6b6b; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Session Expired</h1>
+      <p class="muted">Please go back and try again. If you were inactive, your session may have expired.</p>
+      {% if reason %}
+        <p class="muted">Reason: {{ reason }}</p>
+      {% endif %}
+      <p><a href="/login/">Sign in again</a></p>
+    </div>
+  </body>
+</html>

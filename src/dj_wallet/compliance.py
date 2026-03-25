@@ -21,6 +21,33 @@ class ComplianceService:
         )
         return profile
 
+    @classmethod
+    def suspend(cls, holder, reason=""):
+        profile = cls.get_profile(holder)
+        profile.is_suspended = True
+        if reason:
+            profile.notes = (profile.notes + "\n" if profile.notes else "") + reason
+        profile.save(update_fields=["is_suspended", "notes", "updated_at"])
+        return profile
+
+    @classmethod
+    def unsuspend(cls, holder, reason=""):
+        profile = cls.get_profile(holder)
+        profile.is_suspended = False
+        if reason:
+            profile.notes = (profile.notes + "\n" if profile.notes else "") + reason
+        profile.save(update_fields=["is_suspended", "notes", "updated_at"])
+        return profile
+
+    @classmethod
+    def set_status(cls, holder, status, note=""):
+        profile = cls.get_profile(holder)
+        profile.status = status
+        if note:
+            profile.notes = (profile.notes + "\n" if profile.notes else "") + note
+        profile.save(update_fields=["status", "notes", "updated_at"])
+        return profile
+
     @staticmethod
     def sum_outflow(holder, since):
         ct = ContentType.objects.get_for_model(holder)

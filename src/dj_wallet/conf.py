@@ -31,9 +31,13 @@ class WalletSettings:
     ANCHOR_SERVICE_CLASS: str = "dj_wallet.anchor.AnchorService"
     COMPLIANCE_SERVICE_CLASS: str = "dj_wallet.compliance.ComplianceService"
     FRAUD_SERVICE_CLASS: str = "dj_wallet.fraud.FraudService"
+    USER_SIGNING_SERVICE_CLASS: str = "dj_wallet.user_signing.UserSigningService"
 
     # On-chain anchoring defaults
     ANCHOR_CHAIN_NAME: str = "devnet"
+
+    # Compliance enforcement
+    COMPLIANCE_REQUIRE_KYC: list = None  # actions requiring verified KYC
 
     # Transaction expiration settings
     PENDING_TRANSACTION_EXPIRY_HOURS: int = (
@@ -61,6 +65,13 @@ class WalletSettings:
         """
         Validate user-provided settings and raise ImproperlyConfigured for invalid values.
         """
+        if self.COMPLIANCE_REQUIRE_KYC is None:
+            self.COMPLIANCE_REQUIRE_KYC = ["withdraw", "transfer", "purchase"]
+
+        if not isinstance(self.COMPLIANCE_REQUIRE_KYC, list):
+            raise ImproperlyConfigured(
+                "dj_wallet['COMPLIANCE_REQUIRE_KYC'] must be a list of actions."
+            )
         # Validate MATH_SCALE
         if not isinstance(self.WALLET_MATH_SCALE, int) or self.WALLET_MATH_SCALE < 0:
             raise ImproperlyConfigured(
@@ -95,6 +106,7 @@ class WalletSettings:
             ("ANCHOR_SERVICE_CLASS", self.ANCHOR_SERVICE_CLASS),
             ("COMPLIANCE_SERVICE_CLASS", self.COMPLIANCE_SERVICE_CLASS),
             ("FRAUD_SERVICE_CLASS", self.FRAUD_SERVICE_CLASS),
+            ("USER_SIGNING_SERVICE_CLASS", self.USER_SIGNING_SERVICE_CLASS),
         ]
 
         for name, value in service_classes:

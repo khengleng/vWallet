@@ -84,3 +84,11 @@ def get_fraud_service():
     Override via settings: dj_wallet['FRAUD_SERVICE_CLASS']
     """
     return import_string(wallet_settings.FRAUD_SERVICE_CLASS)
+
+
+def get_user_signing_service():
+    """
+    Returns the configured UserSigningService class.
+    Override via settings: dj_wallet['USER_SIGNING_SERVICE_CLASS']
+    """
+    return import_string(wallet_settings.USER_SIGNING_SERVICE_CLASS)

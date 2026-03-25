@@ -211,3 +211,142 @@ class ComplianceProfile(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class HolderKey(models.Model):
+    """
+    Public keys registered for holders (user-signing).
+    """
+
+    SCHEME_SECP256K1 = "secp256k1"
+    SCHEME_ED25519 = "ed25519"
+
+    SCHEME_CHOICES = (
+        (SCHEME_SECP256K1, "Secp256k1"),
+        (SCHEME_ED25519, "Ed25519"),
+    )
+
+    holder_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    holder_id = models.PositiveIntegerField()
+    holder = GenericForeignKey("holder_type", "holder_id")
+
+    scheme = models.CharField(max_length=32, choices=SCHEME_CHOICES)
+    public_key = models.CharField(max_length=256)
+    key_id = models.CharField(max_length=128, unique=True)
+    label = models.CharField(max_length=120, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+
+class SignatureNonce(models.Model):
+    """
+    Anti-replay nonce for user-signed requests.
+    """
+
+    holder_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    holder_id = models.PositiveIntegerField()
+    holder = GenericForeignKey("holder_type", "holder_id")
+
+    nonce = models.CharField(max_length=64, unique=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CashAgent(models.Model):
+    """
+    Cash-in / Cash-out agent.
+    """
+
+    holder_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    holder_id = models.PositiveIntegerField()
+    holder = GenericForeignKey("holder_type", "holder_id")
+
+    code = models.CharField(max_length=64, unique=True)
+    is_active = models.BooleanField(default=True)
+    daily_limit = models.DecimalField(
+        max_digits=64,
+        decimal_places=wallet_settings.WALLET_MATH_SCALE,
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CashRequest(models.Model):
+    """
+    Cash-in / Cash-out request requiring approval.
+    """
+
+    TYPE_CASHIN = "cashin"
+    TYPE_CASHOUT = "cashout"
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+
+    TYPE_CHOICES = (
+        (TYPE_CASHIN, "Cash In"),
+        (TYPE_CASHOUT, "Cash Out"),
+    )
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"),
+    )
+
+    holder_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    holder_id = models.PositiveIntegerField()
+    holder = GenericForeignKey("holder_type", "holder_id")
+
+    agent = models.ForeignKey(CashAgent, on_delete=models.PROTECT)
+    amount = models.DecimalField(
+        max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
+    )
+    type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    meta = models.JSONField(blank=True, null=True, default=dict)
+
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class TransferReceipt(models.Model):
+    """
+    Receipt for P2P transfers.
+    """
+
+    transfer = models.OneToOneField(Transfer, on_delete=models.CASCADE)
+    reference = models.CharField(max_length=64, unique=True)
+    note = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class FundingSource(models.Model):
+    """
+    External funding source (bank/ABA placeholder).
+    """
+
+    TYPE_BANK = "bank"
+    TYPE_ABA = "aba"
+    TYPE_MOBILE = "mobile"
+
+    TYPE_CHOICES = (
+        (TYPE_BANK, "Bank"),
+        (TYPE_ABA, "ABA"),
+        (TYPE_MOBILE, "Mobile"),
+    )
+
+    holder_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    holder_id = models.PositiveIntegerField()
+    holder = GenericForeignKey("holder_type", "holder_id")
+
+    type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    label = models.CharField(max_length=120)
+    account_ref = models.CharField(max_length=128)
+    meta = models.JSONField(blank=True, null=True, default=dict)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vWallet Portal</title>
+    <style>
+      :root {
+        --bg: #f6f4f1;
+        --ink: #121212;
+        --accent: #0b4b6f;
+        --accent-2: #f6b93b;
+        --card: #ffffff;
+        --muted: #6b6b6b;
+        --border: #e6e1db;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, #fff1d1, transparent),
+                    radial-gradient(1200px 600px at 90% -10%, #d7f1ff, transparent),
+                    var(--bg);
+        color: var(--ink);
+      }
+      header {
+        padding: 24px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .container {
+        padding: 0 20px 40px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .hero {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #eaf6fb;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .stat {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 6px 0;
+      }
+      .list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .list li {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .list li:last-child { border-bottom: 0; }
+      .cta {
+        margin-top: 18px;
+        display: inline-block;
+        background: var(--accent);
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">vWallet</div>
+      <div class="pill">Mobile Money Portal</div>
+    </header>
+
+    <div class="container">
+      <div class="hero">
+        <h1>Welcome to vWallet</h1>
+        <p class="muted">
+          This portal is the operational UI for the mobile money system. Use it
+          to review balances, cash requests, transfers, and anchors.
+        </p>
+        <a class="cta" href="/admin/">Open Admin</a>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Balance</h3>
+          <div class="stat">
+            {% if balance is not None %}{{ balance }}{% else %}--{% endif %}
+          </div>
+          <div class="muted">Default wallet</div>
+        </div>
+        <div class="card">
+          <h3>Transactions</h3>
+          <div class="stat">{{ tx_count }}</div>
+          <div class="muted">Total transactions</div>
+        </div>
+        {% if "ops" in user_roles %}
+          <div class="card">
+            <h3>Anchors</h3>
+            <div class="stat">{{ anchors_pending }}</div>
+            <div class="muted">Pending anchors</div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if "ops" in user_roles %}
+        <div class="grid">
+          <div class="card">
+            <h3>Ops Queue</h3>
+            <div class="stat">{{ ops_cash_pending|default:"0" }}</div>
+            <div class="muted">All pending cash requests</div>
+            {% if ops_pending_list %}
+              <ul class="list">
+                {% for r in ops_pending_list %}
+                  <li>
+                    #{{ r.id }} · {{ r.type }} · {{ r.amount }}
+                    <form method="post" action="/api/cash/approve/{{ r.id }}" style="display:inline;">
+                      {% csrf_token %}
+                      <button class="cta" style="padding:4px 8px; font-size:12px;">Approve</button>
+                    </form>
+                    <form method="post" action="/api/cash/reject/{{ r.id }}" style="display:inline;">
+                      {% csrf_token %}
+                      <button class="cta" style="padding:4px 8px; font-size:12px; background:#9b2c2c;">Reject</button>
+                    </form>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if "agent" in user_roles %}
+        <div class="grid">
+          <div class="card">
+            <h3>Agent Queue</h3>
+            <div class="stat">{{ agent_cash_pending|default:"0" }}</div>
+            <div class="muted">Pending requests for this agent</div>
+            {% if agent_pending_list %}
+              <ul class="list">
+                {% for r in agent_pending_list %}
+                  <li>
+                    #{{ r.id }} · {{ r.type }} · {{ r.amount }}
+                    <form method="post" action="/api/cash/approve/{{ r.id }}" style="display:inline;">
+                      {% csrf_token %}
+                      <button class="cta" style="padding:4px 8px; font-size:12px;">Approve</button>
+                    </form>
+                    <form method="post" action="/api/cash/reject/{{ r.id }}" style="display:inline;">
+                      {% csrf_token %}
+                      <button class="cta" style="padding:4px 8px; font-size:12px; background:#9b2c2c;">Reject</button>
+                    </form>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="grid">
+        {% if "agent" in user_roles or "ops" in user_roles %}
+          <div class="card">
+            <h3>Cash Requests (Pending)</h3>
+            <div class="stat">{{ cash_pending }}</div>
+            <div class="muted">Awaiting approval</div>
+          </div>
+        {% endif %}
+        <div class="card">
+          <h3>Recent Cash Requests</h3>
+          <ul class="list">
+            {% if recent_cash %}
+              {% for r in recent_cash %}
+                <li>
+                  {{ r.type }} · {{ r.status }} · {{ r.amount }}
+                  <span class="muted">({{ r.created_at }})</span>
+                </li>
+              {% endfor %}
+            {% else %}
+              <li class="muted">No recent cash requests.</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
