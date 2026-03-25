@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vWallet Anchors</title>
+    <style>
+      :root {
+        --bg: #f6f4f1;
+        --ink: #121212;
+        --accent: #0b4b6f;
+        --card: #ffffff;
+        --muted: #6b6b6b;
+        --border: #e6e1db;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, #fff1d1, transparent),
+                    radial-gradient(1200px 600px at 90% -10%, #d7f1ff, transparent),
+                    var(--bg);
+        color: var(--ink);
+      }
+      header {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand { font-weight: 700; letter-spacing: 0.04em; }
+      .nav a { margin-left: 12px; color: var(--accent); text-decoration: none; font-weight: 600; }
+      .container { padding: 0 20px 40px; max-width: 1000px; margin: 0 auto; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .stat { font-size: 28px; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+      th { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">vWallet</div>
+      <nav class="nav">
+        <a href="/api/">Dashboard</a>
+        <a href="/api/portal/balances">Balances</a>
+        <a href="/api/portal/cash">Cash</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <h2>Anchors</h2>
+        <div class="stat">{{ anchors_pending }}</div>
+        <div class="muted">Pending anchors across the system</div>
+      </div>
+
+      <div class="card">
+        <h3>Recent Anchors</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>On-chain Tx</th>
+              <th>Transaction</th>
+              <th>Amount</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if anchors_recent %}
+              {% for a in anchors_recent %}
+                <tr>
+                  <td>#{{ a.id }}</td>
+                  <td>{{ a.status }}</td>
+                  <td class="muted">{{ a.onchain_tx_hash|default:"--" }}</td>
+                  <td class="muted">{{ a.transaction__uuid }}</td>
+                  <td>{{ a.transaction__amount }}</td>
+                  <td>{{ a.created_at }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="6" class="muted">No anchors yet.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

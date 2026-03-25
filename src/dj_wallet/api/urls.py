@@ -1,10 +1,18 @@
 from django.urls import path
-from dj_wallet.portal import portal_view
+from dj_wallet.portal import (
+    portal_balances_view,
+    portal_cash_view,
+    portal_anchors_view,
+    portal_view,
+)
 
 from dj_wallet.api import views
 
 urlpatterns = [
     path("", portal_view, name="portal"),
+    path("portal/balances", portal_balances_view, name="portal-balances"),
+    path("portal/anchors", portal_anchors_view, name="portal-anchors"),
+    path("portal/cash", portal_cash_view, name="portal-cash"),
     path("wallet/balance", views.BalanceView.as_view(), name="wallet-balance"),
     path("wallet/nonce", views.NonceView.as_view(), name="wallet-nonce"),
     path("wallet/deposit", views.DepositView.as_view(), name="wallet-deposit"),

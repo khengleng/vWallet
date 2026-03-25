@@ -95,7 +95,10 @@ class BesuAdapter(ChainAdapter):
             }
         )
         signed = self.w3.eth.account.sign_transaction(tx, self._config().private_key)
-        tx_hash_bytes = self.w3.eth.send_raw_transaction(signed.rawTransaction)
+        raw_tx = getattr(signed, "rawTransaction", None)
+        if raw_tx is None:
+            raw_tx = signed.raw_transaction
+        tx_hash_bytes = self.w3.eth.send_raw_transaction(raw_tx)
         return tx_hash_bytes.hex()
 
     def check_confirmation(self, onchain_tx_hash):

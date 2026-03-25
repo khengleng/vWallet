@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vWallet Cash</title>
+    <style>
+      :root {
+        --bg: #f6f4f1;
+        --ink: #121212;
+        --accent: #0b4b6f;
+        --danger: #9b2c2c;
+        --card: #ffffff;
+        --muted: #6b6b6b;
+        --border: #e6e1db;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, #fff1d1, transparent),
+                    radial-gradient(1200px 600px at 90% -10%, #d7f1ff, transparent),
+                    var(--bg);
+        color: var(--ink);
+      }
+      header {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand { font-weight: 700; letter-spacing: 0.04em; }
+      .nav a { margin-left: 12px; color: var(--accent); text-decoration: none; font-weight: 600; }
+      .container { padding: 0 20px 40px; max-width: 1000px; margin: 0 auto; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .stat { font-size: 28px; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+      th { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+      .muted { color: var(--muted); }
+      .btn {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn.danger { background: var(--danger); }
+      form { display: inline; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">vWallet</div>
+      <nav class="nav">
+        <a href="/api/">Dashboard</a>
+        <a href="/api/portal/balances">Balances</a>
+        <a href="/api/portal/anchors">Anchors</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <h2>Cash Requests</h2>
+        <div class="stat">{{ cash_pending }}</div>
+        <div class="muted">Pending cash requests for this user</div>
+      </div>
+
+      {% if "ops" in user_roles %}
+        <div class="card">
+          <h3>Ops Queue</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Created</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if ops_pending_list %}
+                {% for r in ops_pending_list %}
+                  <tr>
+                    <td>#{{ r.id }}</td>
+                    <td>{{ r.type }}</td>
+                    <td>{{ r.amount }}</td>
+                    <td>{{ r.created_at }}</td>
+                    <td>
+                      <form method="post" action="/api/cash/approve/{{ r.id }}">{% csrf_token %}<button class="btn">Approve</button></form>
+                      <form method="post" action="/api/cash/reject/{{ r.id }}">{% csrf_token %}<button class="btn danger">Reject</button></form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="5" class="muted">No pending ops requests.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
+      {% if "agent" in user_roles %}
+        <div class="card">
+          <h3>Agent Queue</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Created</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if agent_pending_list %}
+                {% for r in agent_pending_list %}
+                  <tr>
+                    <td>#{{ r.id }}</td>
+                    <td>{{ r.type }}</td>
+                    <td>{{ r.amount }}</td>
+                    <td>{{ r.created_at }}</td>
+                    <td>
+                      <form method="post" action="/api/cash/approve/{{ r.id }}">{% csrf_token %}<button class="btn">Approve</button></form>
+                      <form method="post" action="/api/cash/reject/{{ r.id }}">{% csrf_token %}<button class="btn danger">Reject</button></form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="5" class="muted">No pending agent requests.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
+      <div class="card">
+        <h3>Recent Cash Requests</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Amount</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if recent_cash %}
+              {% for r in recent_cash %}
+                <tr>
+                  <td>#{{ r.id }}</td>
+                  <td>{{ r.type }}</td>
+                  <td>{{ r.status }}</td>
+                  <td>{{ r.amount }}</td>
+                  <td>{{ r.created_at }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="5" class="muted">No recent cash requests.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

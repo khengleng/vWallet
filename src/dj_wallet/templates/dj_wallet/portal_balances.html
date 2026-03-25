@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vWallet Balances</title>
+    <style>
+      :root {
+        --bg: #f6f4f1;
+        --ink: #121212;
+        --accent: #0b4b6f;
+        --card: #ffffff;
+        --muted: #6b6b6b;
+        --border: #e6e1db;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(1200px 600px at 10% -10%, #fff1d1, transparent),
+                    radial-gradient(1200px 600px at 90% -10%, #d7f1ff, transparent),
+                    var(--bg);
+        color: var(--ink);
+      }
+      header {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand { font-weight: 700; letter-spacing: 0.04em; }
+      .nav a { margin-left: 12px; color: var(--accent); text-decoration: none; font-weight: 600; }
+      .container { padding: 0 20px 40px; max-width: 1000px; margin: 0 auto; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .stat { font-size: 28px; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+      th { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">vWallet</div>
+      <nav class="nav">
+        <a href="/api/">Dashboard</a>
+        <a href="/api/portal/anchors">Anchors</a>
+        <a href="/api/portal/cash">Cash</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <h2>Balances</h2>
+        <div class="stat">{% if balance is not None %}{{ balance }}{% else %}--{% endif %}</div>
+        <div class="muted">Wallet UUID: {% if wallet_uuid %}{{ wallet_uuid }}{% else %}--{% endif %}</div>
+      </div>
+
+      <div class="card">
+        <h3>Recent Transactions</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Tx Hash</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if recent_transactions %}
+              {% for t in recent_transactions %}
+                <tr>
+                  <td>{{ t.type }}</td>
+                  <td>{{ t.amount }}</td>
+                  <td>{{ t.status }}</td>
+                  <td>{{ t.created_at }}</td>
+                  <td class="muted">{{ t.tx_hash|default:"--" }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="muted">No transactions yet.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
