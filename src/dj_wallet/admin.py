@@ -21,7 +21,13 @@ from .models import (
     Wallet,
     WalletRole,
     WalletRoleAssignment,
+    MobileSecurityProfile,
+    MfaChallenge,
 )
+
+admin.site.site_header = "2M Platform Administration"
+admin.site.site_title = "2M Platform Administration"
+admin.site.index_title = "2M Platform Administration"
 
 
 @admin.register(Wallet)
@@ -78,7 +84,16 @@ class IdempotencyKeyAdmin(admin.ModelAdmin):
 
 @admin.register(ApprovalRequest)
 class ApprovalRequestAdmin(admin.ModelAdmin):
-    list_display = ("action", "holder_type", "holder_id", "amount", "status", "created_at")
+    list_display = (
+        "action",
+        "holder_type",
+        "holder_id",
+        "amount",
+        "status",
+        "created_at",
+        "resolved_by",
+        "second_approved_by",
+    )
     list_filter = ("action", "status")
     search_fields = ("holder_id",)
 
@@ -119,7 +134,19 @@ class TransactionReviewAdmin(admin.ModelAdmin):
 class HolderKeyAdmin(admin.ModelAdmin):
     list_display = ("key_id", "holder_type", "holder_id", "scheme", "is_active")
     search_fields = ("key_id", "public_key")
-    list_filter = ("scheme", "is_active")
+
+
+@admin.register(MobileSecurityProfile)
+class MobileSecurityProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "pin_set_at", "created_at")
+    search_fields = ("user__username", "user__email")
+
+
+@admin.register(MfaChallenge)
+class MfaChallengeAdmin(admin.ModelAdmin):
+    list_display = ("user", "action", "amount", "expires_at", "verified_at")
+    search_fields = ("user__username", "action")
+    list_filter = ("action",)
 
 
 @admin.register(SignatureNonce)

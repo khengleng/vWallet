@@ -15,6 +15,7 @@ DJ_WALLET_KEY_PROVIDER = os.environ.get(
     "DJ_WALLET_KEY_PROVIDER", "dj_wallet.security.keys.EnvKeyProvider"
 )
 DJ_WALLET_SIGN_AUDIT = os.environ.get("DJ_WALLET_SIGN_AUDIT", "1") == "1"
+DJ_WALLET_MOBILE_CUSTODIAL = os.environ.get("DJ_WALLET_MOBILE_CUSTODIAL", "1") == "1"
 
 INSTALLED_APPS = [
     "django.contrib.admin",

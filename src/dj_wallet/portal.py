@@ -2,7 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render
 
-from .models import CashAgent, CashRequest, ChainAnchor, Transaction, Wallet
+from .models import CashAgent, CashRequest, ChainAnchor, Transaction, Wallet, ApprovalRequest
+from .conf import wallet_settings
 
 
 def _base_context(request):
@@ -16,6 +17,21 @@ def _base_context(request):
         "anchors_recent": [],
         "wallet_uuid": None,
         "user_roles": [],
+        "approvals_pending": 0,
+        "approvals_list": [],
+        "high_value_threshold": max(
+            t
+            for t in [
+                wallet_settings.APPROVAL_WITHDRAW_THRESHOLD,
+                wallet_settings.APPROVAL_TRANSFER_THRESHOLD,
+            ]
+            if t is not None
+        )
+        if (
+            wallet_settings.APPROVAL_WITHDRAW_THRESHOLD is not None
+            or wallet_settings.APPROVAL_TRANSFER_THRESHOLD is not None
+        )
+        else 0,
     }
 
     if not request.user.is_authenticated:
@@ -98,6 +114,20 @@ def _base_context(request):
                 .order_by("-created_at")[:10]
                 .values("id", "type", "amount", "holder_id", "created_at")
             )
+        context["approvals_pending"] = ApprovalRequest.objects.filter(
+            status=ApprovalRequest.STATUS_PENDING
+        ).count()
+        context["approvals_list"] = list(
+            ApprovalRequest.objects.filter(status=ApprovalRequest.STATUS_PENDING)
+            .order_by("-created_at")[:10]
+            .values(
+                "id",
+                "action",
+                "amount",
+                "created_at",
+                "resolved_by_id",
+            )
+        )
 
     return context
 
@@ -139,5 +169,22 @@ def portal_docs_view(request):
     return render(
         request,
         "dj_wallet/portal_docs.html",
+        _base_context(request),
+    )
+
+
+@login_required
+def portal_approvals_view(request):
+    return render(
+        request,
+        "dj_wallet/portal_approvals.html",
+        _base_context(request),
+    )
+
+
+def mobile_view(request):
+    return render(
+        request,
+        "dj_wallet/mobile.html",
         _base_context(request),
     )

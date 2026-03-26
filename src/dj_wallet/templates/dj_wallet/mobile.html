@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="2M Platform" />
+    <link rel="apple-touch-startup-image" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1125' height='2436'><rect width='1125' height='2436' fill='%230d0f14'/><circle cx='562' cy='1100' r='220' fill='%2322d3ee'/><text x='562' y='1160' font-size='140' text-anchor='middle' fill='white' font-family='Arial'>2M</text></svg>" />
+    <meta name="theme-color" content="#0d0f14" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><rect width='180' height='180' fill='%230d0f14'/><circle cx='90' cy='90' r='60' fill='%2322d3ee'/><text x='90' y='106' font-size='44' text-anchor='middle' fill='white' font-family='Arial'>vW</text></svg>" />
+    <title>2M Platform Mobile</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap");
+      :root {
+        --bg: #0d0f14;
+        --card: #171b24;
+        --ink: #f8fafc;
+        --muted: #a3b1c6;
+        --accent: #22d3ee;
+        --accent-2: #fb7185;
+        --line: rgba(148,163,184,0.2);
+        --shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        background: radial-gradient(700px 500px at 20% -10%, rgba(34,211,238,0.25), transparent),
+                    radial-gradient(700px 500px at 100% 20%, rgba(251,113,133,0.2), transparent),
+                    var(--bg);
+        color: var(--ink);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(13,15,20,0.85);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+      }
+      .brand { font-weight: 700; letter-spacing: 0.08em; }
+      .nav { display: flex; gap: 8px; }
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        background: rgba(23,27,36,0.9);
+        border: 1px solid transparent;
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+      }
+      .nav a.active { border-color: var(--accent); color: var(--accent); }
+      .phone {
+        max-width: 420px;
+        margin: 20px auto 40px;
+        padding: 18px;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .chip {
+        background: rgba(34,211,238,0.15);
+        color: var(--accent);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+      .balance {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+      .balance h2 { margin: 0; font-size: 14px; color: var(--muted); }
+      .balance .amount { font-size: 28px; font-weight: 700; margin-top: 8px; }
+      .balance .sub { font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .action {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+        text-align: center;
+        font-size: 12px;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+        cursor: pointer;
+      }
+      .action:hover {
+        transform: translateY(-2px);
+        border-color: rgba(34,211,238,0.5);
+      }
+      .list {
+        margin-top: 18px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: var(--shadow);
+      }
+      .list h3 { margin: 4px 8px 12px; font-size: 14px; color: var(--muted); }
+      .item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .item:last-child { border-bottom: 0; }
+      .item .sub {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .pill {
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: rgba(34,211,238,0.15);
+        color: var(--accent);
+        font-size: 11px;
+      }
+      .footer {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .tab {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 0;
+        text-align: center;
+        font-size: 11px;
+        color: var(--muted);
+        cursor: pointer;
+        transition: color 0.2s ease, border-color 0.2s ease;
+      }
+      .tab.active {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .section { display: none; }
+      .section.active { display: block; }
+      .kv {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+      }
+      .kv:last-child { border-bottom: 0; }
+      .kv .label { color: var(--muted); }
+      .copy {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 4px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .kv input {
+        background: #0f141d;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 12px;
+        width: 120px;
+      }
+      .kv button {
+        background: var(--accent);
+        border: none;
+        color: #0d0f14;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .install {
+        background: rgba(34,211,238,0.15);
+        border: 1px dashed rgba(34,211,238,0.6);
+        color: var(--accent);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 12px;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .install-fab {
+        position: fixed;
+        right: 18px;
+        bottom: 92px;
+        background: var(--accent);
+        color: #0d0f14;
+        border: none;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        display: none;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        animation: float 2.4s ease-in-out infinite;
+        z-index: 25;
+      }
+      @media (min-width: 520px) {
+        .install-fab { display: none !important; }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+      .install button {
+        background: var(--accent);
+        border: none;
+        color: #0d0f14;
+        padding: 6px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .auth {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(23,27,36,0.8);
+        display: grid;
+        gap: 10px;
+        box-shadow: var(--shadow);
+      }
+      .signedout {
+        position: fixed;
+        inset: 0;
+        background: rgba(13,15,20,0.92);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 40;
+        padding: 20px;
+      }
+      .signedout .card {
+        max-width: 360px;
+        width: 100%;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: var(--shadow);
+      }
+      .signedout .card h2 { margin: 0 0 8px; }
+      .signedout .card p { color: var(--muted); margin: 0 0 16px; }
+      .signedout .card button {
+        background: var(--accent);
+        color: #0d0f14;
+        border: none;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .auth input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #0f141d;
+        color: var(--ink);
+        font-size: 13px;
+      }
+      .auth button {
+        background: var(--accent);
+        color: #0d0f14;
+        border: none;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .auth .link {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        cursor: pointer;
+      }
+      .auth .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+      }
+      .hidden { display: none; }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(10,12,16,0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+      }
+      .modal .panel {
+        width: min(92vw, 360px);
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        display: grid;
+        gap: 10px;
+        box-shadow: var(--shadow);
+      }
+      .modal input, .modal select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #0f141d;
+        color: var(--ink);
+        font-size: 13px;
+      }
+      .modal button {
+        background: var(--accent);
+        color: #0d0f14;
+        border: none;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .modal .ghost {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+      .status {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148,163,184,0.2);
+        color: var(--ink);
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 12px;
+        display: none;
+        z-index: 30;
+      }
+      .toast.show { display: block; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">2M Platform</div>
+      <nav class="nav">
+        <a href="/api/">Portal</a>
+        <a class="active" href="/mobile/">Mobile</a>
+        <a href="/api/portal/docs">API</a>
+      </nav>
+    </header>
+
+    <div class="phone">
+      <div class="install" id="installBanner">
+        <span>Install 2M Platform on your home screen.</span>
+        <button id="installBtn" type="button">Install</button>
+      </div>
+      <div class="auth" id="authBox">
+        <div class="row">
+          <div>
+            <div class="sub">Mobile Auth</div>
+            <div class="status" id="authStatus">Not connected</div>
+          </div>
+          <button type="button" id="logoutBtn" class="hidden">Logout</button>
+        </div>
+        <input id="authUser" placeholder="username or email" autocomplete="username" />
+        <input id="authPass" placeholder="password" type="password" autocomplete="current-password" />
+        <input id="authPin" placeholder="pin (mobile only)" type="password" autocomplete="one-time-code" />
+        <button type="button" id="loginBtn">Login</button>
+        <button type="button" id="pinLoginBtn">Login with PIN</button>
+        <div class="link" id="registerLink">Create account</div>
+        <div class="link" id="resetLink">Forgot password</div>
+      </div>
+      <section class="section active" data-section="home">
+        <div class="top">
+          <div>Welcome back</div>
+          <div class="chip">Mobile Demo</div>
+        </div>
+
+        <div class="balance">
+          <h2>Available Balance</h2>
+          <div class="amount">{% if balance is not None %}{{ balance }}{% else %}--{% endif %}</div>
+          <div class="sub">Default wallet</div>
+        </div>
+
+        <div class="actions">
+          <div class="action" data-action="send">Send</div>
+          <div class="action" data-action="cashin">Cash In</div>
+          <div class="action" data-action="cashout">Cash Out</div>
+          <div class="action" data-action="topup">Top Up</div>
+          <div class="action" data-action="scan">Scan</div>
+          <div class="action" data-action="history">History</div>
+        </div>
+
+        <div class="list">
+          <h3>Recent Cash Requests</h3>
+          {% if recent_cash %}
+            {% for r in recent_cash %}
+              <div class="item">
+                <div>
+                  <div class="pill">{{ r.type }}</div>
+                  <div class="sub">{{ r.status }}</div>
+                </div>
+                <div>{{ r.amount }}</div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="item"><span class="sub">No recent requests.</span></div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="section" data-section="wallet">
+        <div class="list">
+          <h3>Wallet Details</h3>
+          <div class="kv">
+            <div class="label">Wallet ID</div>
+            <div>
+              <span id="walletId">{{ wallet_uuid|default:"--" }}</span>
+              <button class="copy" type="button" id="copyWallet">Copy</button>
+            </div>
+          </div>
+          <div class="kv">
+            <div class="label">Transactions</div>
+            <div>{{ tx_count|default:"0" }}</div>
+          </div>
+          <div class="kv">
+            <div class="label">Anchors Pending</div>
+            <div>{{ anchors_pending|default:"0" }}</div>
+          </div>
+          <div class="kv">
+            <div class="label">Roles</div>
+            <div>{{ user_roles|join:", " }}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-section="profile">
+        <div class="list">
+          <h3>Profile</h3>
+          <div class="kv">
+            <div class="label">Username</div>
+            <div id="profileUsername">guest</div>
+          </div>
+          <div class="kv">
+            <div class="label">Session</div>
+            <div id="sessionStatus">Guest</div>
+          </div>
+          <div class="kv">
+            <div class="label">Role</div>
+            <div id="roleBadge">Guest</div>
+          </div>
+          <div class="kv">
+            <div class="label">Set PIN</div>
+            <div>
+              <input id="pinInput" type="password" placeholder="4-8 digits" />
+              <button type="button" id="pinSave">Save</button>
+            </div>
+          </div>
+          <div class="kv">
+            <div class="label">Device ID</div>
+            <div id="deviceId">--</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        <div class="tab active" data-tab="home">Home</div>
+        <div class="tab" data-tab="wallet">Wallet</div>
+        <div class="tab" data-tab="scan">Scan</div>
+        <div class="tab" data-tab="profile">Profile</div>
+      </div>
+    </div>
+
+    <div class="modal" id="actionModal">
+      <div class="panel">
+        <div class="sub" id="modalTitle">Action</div>
+        <div id="modalBody"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button type="button" class="ghost" id="modalCancel">Cancel</button>
+          <button type="button" id="modalSubmit">Submit</button>
+        </div>
+        <div class="status" id="modalStatus"></div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <button class="install-fab" id="installFab" type="button">Install</button>
+    <div class="signedout" id="signedOutScreen">
+      <div class="card">
+        <h2>Signed out</h2>
+        <p>Please sign in to continue using 2M Platform.</p>
+        <button type="button" id="signedOutLogin">Go to Login</button>
+      </div>
+    </div>
+    <script>
+      let deferredPrompt = null;
+      const installBanner = document.getElementById("installBanner");
+      const installBtn = document.getElementById("installBtn");
+      const installFab = document.getElementById("installFab");
+      const signedOutScreen = document.getElementById("signedOutScreen");
+      const signedOutLogin = document.getElementById("signedOutLogin");
+      const authStatus = document.getElementById("authStatus");
+      const authUser = document.getElementById("authUser");
+      const authPass = document.getElementById("authPass");
+      const authPin = document.getElementById("authPin");
+      const loginBtn = document.getElementById("loginBtn");
+      const pinLoginBtn = document.getElementById("pinLoginBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const registerLink = document.getElementById("registerLink");
+      const resetLink = document.getElementById("resetLink");
+      const modal = document.getElementById("actionModal");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalBody = document.getElementById("modalBody");
+      const modalCancel = document.getElementById("modalCancel");
+      const modalSubmit = document.getElementById("modalSubmit");
+      const modalStatus = document.getElementById("modalStatus");
+      const balanceEl = document.querySelector(".balance .amount");
+      const sessionStatus = document.getElementById("sessionStatus");
+      const deviceIdEl = document.getElementById("deviceId");
+      const walletIdEl = document.getElementById("walletId");
+      const copyWallet = document.getElementById("copyWallet");
+      const roleBadge = document.getElementById("roleBadge");
+      const profileUsername = document.getElementById("profileUsername");
+      const pinInput = document.getElementById("pinInput");
+      const pinSave = document.getElementById("pinSave");
+      const HIGH_VALUE_THRESHOLD = Number("{{ high_value_threshold|default:'5000' }}");
+      const toast = document.getElementById("toast");
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function autoHideInstallFab() {
+        if (!installFab || installFab.style.display === "none") return;
+        setTimeout(() => {
+          installFab.style.display = "none";
+        }, 7000);
+      }
+      let lastScrollShow = 0;
+      const installShownKey = "vwalletInstallShown";
+      function showInstallFabOnScroll() {
+        if (!deferredPrompt) return;
+        if (sessionStorage.getItem(installShownKey) === "1") return;
+        const nowTs = Date.now();
+        if (nowTs - lastScrollShow < 4000) return;
+        installFab.style.display = "inline-flex";
+        lastScrollShow = nowTs;
+        sessionStorage.setItem(installShownKey, "1");
+        autoHideInstallFab();
+      }
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
+
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredPrompt = event;
+        installBanner.style.display = "flex";
+        installFab.style.display = "inline-flex";
+        autoHideInstallFab();
+      });
+
+      window.addEventListener("appinstalled", () => {
+        installBanner.style.display = "none";
+        installFab.style.display = "none";
+        showToast("Installed");
+      });
+
+      installBtn.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBanner.style.display = "none";
+        installFab.style.display = "none";
+      });
+
+      installFab.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBanner.style.display = "none";
+        installFab.style.display = "none";
+      });
+
+      window.addEventListener("scroll", showInstallFabOnScroll, { passive: true });
+
+      const tokenKey = "vwalletToken";
+      const getToken = () => localStorage.getItem(tokenKey);
+      const setToken = (token) => localStorage.setItem(tokenKey, token);
+      const clearToken = () => localStorage.removeItem(tokenKey);
+      const deviceKey = "vwalletDeviceId";
+
+      function getDeviceId() {
+        let id = localStorage.getItem(deviceKey);
+        if (!id) {
+          id = `dev-${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
+          localStorage.setItem(deviceKey, id);
+        }
+        return id;
+      }
+
+      function setAuthState(connected) {
+        loginBtn.classList.toggle("hidden", connected);
+        authUser.classList.toggle("hidden", connected);
+        authPass.classList.toggle("hidden", connected);
+        logoutBtn.classList.toggle("hidden", !connected);
+        sessionStatus.textContent = connected ? "Authenticated" : "Guest";
+        roleBadge.textContent = connected ? "Customer" : "Guest";
+        profileUsername.textContent = connected ? "…" : "guest";
+        signedOutScreen.style.display = connected ? "none" : "flex";
+      }
+
+      async function apiFetch(path, opts = {}) {
+        const headers = opts.headers ? { ...opts.headers } : {};
+        const token = getToken();
+        if (token) headers["Authorization"] = `Token ${token}`;
+        headers["X-Device-Id"] = getDeviceId();
+        headers["X-Platform"] = "pwa";
+        headers["X-App-Version"] = "0.3.0";
+        if (!headers["Content-Type"] && opts.body) {
+          headers["Content-Type"] = "application/json";
+        }
+        const resp = await fetch(path, { ...opts, headers });
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(text || resp.statusText);
+        }
+        return resp.json();
+      }
+
+      async function refreshBalance() {
+        try {
+          const data = await apiFetch("/api/wallet/balance");
+          balanceEl.textContent = data.balance ?? "--";
+        } catch {
+          balanceEl.textContent = "--";
+        }
+      }
+
+      async function refreshProfile() {
+        try {
+          const data = await apiFetch("/api/auth/me");
+          const role = (data.roles || [])[0] || "customer";
+          roleBadge.textContent = role;
+          sessionStatus.textContent = "Authenticated";
+          profileUsername.textContent = data.username || "customer";
+        } catch {
+          roleBadge.textContent = "Customer";
+        }
+      }
+
+      async function savePin() {
+        const pin = (pinInput.value || "").trim();
+        if (!pin) {
+          showToast("PIN required");
+          return;
+        }
+        try {
+          await apiFetch("/api/auth/pin/set", {
+            method: "POST",
+            body: JSON.stringify({ pin }),
+          });
+          showToast("PIN saved");
+          pinInput.value = "";
+        } catch (err) {
+          showToast(err.message || "PIN save failed");
+        }
+      }
+
+      async function login() {
+        authStatus.textContent = "Signing in...";
+        try {
+          const resp = await fetch("/api/auth/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: authUser.value, password: authPass.value }),
+          });
+          const raw = await resp.text();
+          let data = {};
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            data = {};
+          }
+          if (!resp.ok || !data.token) throw new Error(data.detail || raw || "Login failed");
+          setToken(data.token);
+          setAuthState(true);
+          authStatus.textContent = "Connected";
+          await refreshBalance();
+          await refreshProfile();
+        } catch (err) {
+          authStatus.textContent = err.message || "Login failed";
+        }
+      }
+
+      async function loginWithPin() {
+        authStatus.textContent = "Signing in...";
+        try {
+          const payload = {
+            username: authUser.value,
+            email: authUser.value.includes("@") ? authUser.value : "",
+            pin: authPin.value,
+          };
+          const data = await apiFetch("/api/auth/pin/login", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          if (!data.token) throw new Error("Login failed");
+          setToken(data.token);
+          setAuthState(true);
+          authStatus.textContent = "Connected";
+          await refreshBalance();
+          await refreshProfile();
+        } catch (err) {
+          authStatus.textContent = err.message || "Login failed";
+        }
+      }
+
+      function logout() {
+        clearToken();
+        setAuthState(false);
+        authStatus.textContent = "Not connected";
+        balanceEl.textContent = "--";
+        showToast("Signed out");
+      }
+
+      loginBtn.addEventListener("click", login);
+      pinLoginBtn.addEventListener("click", loginWithPin);
+      logoutBtn.addEventListener("click", logout);
+      signedOutLogin.addEventListener("click", () => {
+        signedOutScreen.style.display = "none";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      registerLink.addEventListener("click", () => {
+        openModal(
+          "Create Account",
+          `
+            <input id="regUser" placeholder="Username" />
+            <input id="regEmail" placeholder="Email" />
+            <input id="regPass" type="password" placeholder="Password" />
+          `,
+          async () => {
+            modalStatus.textContent = "Creating...";
+            try {
+              await apiFetch("/api/auth/register", {
+                method: "POST",
+                body: JSON.stringify({
+                  username: document.getElementById("regUser").value,
+                  email: document.getElementById("regEmail").value,
+                  password: document.getElementById("regPass").value,
+                }),
+              });
+              modalStatus.textContent = "Account created. Log in.";
+              showToast("Account created");
+              closeModal();
+            } catch (err) {
+              modalStatus.textContent = err.message || "Failed";
+            }
+          }
+        );
+      });
+      resetLink.addEventListener("click", () => {
+        openModal(
+          "Reset Password",
+          `
+            <input id="resetEmail" placeholder="Email address" />
+          `,
+          async () => {
+            modalStatus.textContent = "Sending...";
+            try {
+              await apiFetch("/api/auth/password-reset", {
+                method: "POST",
+                body: JSON.stringify({ email: document.getElementById("resetEmail").value }),
+              });
+              modalStatus.textContent = "Check your email.";
+              showToast("Reset email sent");
+              closeModal();
+            } catch (err) {
+              modalStatus.textContent = err.message || "Failed";
+            }
+          }
+        );
+      });
+
+      function openModal(title, bodyHtml, onSubmit) {
+        modalTitle.textContent = title;
+        modalBody.innerHTML = bodyHtml;
+        modalStatus.textContent = "";
+        modal.style.display = "flex";
+        modalSubmit.onclick = onSubmit;
+      }
+
+      function closeModal() {
+        modal.style.display = "none";
+      }
+
+      modalCancel.addEventListener("click", closeModal);
+      pinSave.addEventListener("click", savePin);
+      copyWallet.addEventListener("click", () => {
+        if (!walletIdEl) return;
+        navigator.clipboard.writeText(walletIdEl.textContent || "");
+        showToast("Wallet ID copied");
+      });
+
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const target = tab.dataset.tab;
+          if (target === "scan") {
+            document.querySelector('[data-action="scan"]').click();
+            return;
+          }
+          document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          document
+            .querySelectorAll(".section")
+            .forEach((section) => section.classList.toggle("active", section.dataset.section === target));
+        });
+      });
+
+      document.querySelectorAll(".action").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const action = btn.dataset.action;
+          if (!getToken()) {
+            authStatus.textContent = "Login required";
+            return;
+          }
+          if (action === "send") {
+            openModal(
+              "Send Money",
+              `
+                <input id="toUser" placeholder="Recipient username" />
+                <input id="amount" type="number" step="0.01" placeholder="Amount" />
+                <input id="note" placeholder="Note (optional)" />
+                <input id="pin" type="password" placeholder="PIN" />
+              `,
+              async () => {
+                modalStatus.textContent = "Submitting...";
+                try {
+                  const amount = document.getElementById("amount").value;
+                  let mfaToken = "";
+                  if (Number(amount) >= HIGH_VALUE_THRESHOLD) {
+                    const challenge = await apiFetch("/api/auth/mfa/challenge", {
+                      method: "POST",
+                      body: JSON.stringify({ action: "transfer", amount }),
+                    });
+                    if (challenge.code) {
+                      showToast(`MFA code (debug): ${challenge.code}`);
+                    }
+                    const code = window.prompt("Enter MFA code");
+                    const verify = await apiFetch("/api/auth/mfa/verify", {
+                      method: "POST",
+                      body: JSON.stringify({ challenge_id: challenge.challenge_id, code }),
+                    });
+                    mfaToken = verify.mfa_token;
+                  }
+                  const payload = {
+                    to_username: document.getElementById("toUser").value,
+                    amount,
+                    memo: document.getElementById("note").value,
+                    pin: document.getElementById("pin").value,
+                    mfa_token: mfaToken,
+                  };
+                  await apiFetch("/api/wallet/transfer", {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                    headers: { "Idempotency-Key": `mob-send-${Date.now()}` },
+                  });
+                  modalStatus.textContent = "Sent.";
+                  showToast("Transfer sent");
+                  await refreshBalance();
+                } catch (err) {
+                  modalStatus.textContent = err.message || "Failed";
+                  showToast("Transfer failed");
+                }
+              }
+            );
+          } else if (action === "cashin") {
+            openModal(
+              "Cash In",
+              `
+                <input id="amount" type="number" step="0.01" placeholder="Amount" />
+                <input id="agent" placeholder="Agent code (optional)" />
+                <input id="pin" type="password" placeholder="PIN" />
+              `,
+              async () => {
+                modalStatus.textContent = "Submitting...";
+                try {
+                  const amount = document.getElementById("amount").value;
+                  let mfaToken = "";
+                  if (Number(amount) >= HIGH_VALUE_THRESHOLD) {
+                    const challenge = await apiFetch("/api/auth/mfa/challenge", {
+                      method: "POST",
+                      body: JSON.stringify({ action: "cashin", amount }),
+                    });
+                    if (challenge.code) {
+                      showToast(`MFA code (debug): ${challenge.code}`);
+                    }
+                    const code = window.prompt("Enter MFA code");
+                    const verify = await apiFetch("/api/auth/mfa/verify", {
+                      method: "POST",
+                      body: JSON.stringify({ challenge_id: challenge.challenge_id, code }),
+                    });
+                    mfaToken = verify.mfa_token;
+                  }
+                  const payload = {
+                    amount,
+                    agent_code: document.getElementById("agent").value || null,
+                    pin: document.getElementById("pin").value,
+                    mfa_token: mfaToken,
+                  };
+                  await apiFetch("/api/cashin/request", {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                    headers: { "Idempotency-Key": `mob-cashin-${Date.now()}` },
+                  });
+                  modalStatus.textContent = "Request submitted.";
+                  showToast("Cash-in requested");
+                  await refreshBalance();
+                } catch (err) {
+                  modalStatus.textContent = err.message || "Failed";
+                  showToast("Cash-in failed");
+                }
+              }
+            );
+          } else if (action === "cashout") {
+            openModal(
+              "Cash Out",
+              `
+                <input id="amount" type="number" step="0.01" placeholder="Amount" />
+                <input id="agent" placeholder="Agent code (optional)" />
+                <input id="pin" type="password" placeholder="PIN" />
+              `,
+              async () => {
+                modalStatus.textContent = "Submitting...";
+                try {
+                  const amount = document.getElementById("amount").value;
+                  let mfaToken = "";
+                  if (Number(amount) >= HIGH_VALUE_THRESHOLD) {
+                    const challenge = await apiFetch("/api/auth/mfa/challenge", {
+                      method: "POST",
+                      body: JSON.stringify({ action: "cashout", amount }),
+                    });
+                    if (challenge.code) {
+                      showToast(`MFA code (debug): ${challenge.code}`);
+                    }
+                    const code = window.prompt("Enter MFA code");
+                    const verify = await apiFetch("/api/auth/mfa/verify", {
+                      method: "POST",
+                      body: JSON.stringify({ challenge_id: challenge.challenge_id, code }),
+                    });
+                    mfaToken = verify.mfa_token;
+                  }
+                  const payload = {
+                    amount,
+                    agent_code: document.getElementById("agent").value || null,
+                    pin: document.getElementById("pin").value,
+                    mfa_token: mfaToken,
+                  };
+                  await apiFetch("/api/cashout/request", {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                    headers: { "Idempotency-Key": `mob-cashout-${Date.now()}` },
+                  });
+                  modalStatus.textContent = "Request submitted.";
+                  showToast("Cash-out requested");
+                  await refreshBalance();
+                } catch (err) {
+                  modalStatus.textContent = err.message || "Failed";
+                  showToast("Cash-out failed");
+                }
+              }
+            );
+          } else if (action === "history") {
+            openModal(
+              "Recent Transactions",
+              `<div class="status" id="historyStatus">Loading...</div>`,
+              closeModal
+            );
+            apiFetch("/api/wallet/transactions")
+              .then((data) => {
+                const items = (data.transactions || []).slice(0, 8).map((tx) => {
+                  const date = tx.created_at ? new Date(tx.created_at).toLocaleString() : "";
+                  return `<div class="item">
+                    <div>
+                      <div>${tx.type}</div>
+                      <div class="sub">${tx.status || ""} · ${date}</div>
+                    </div>
+                    <div>${tx.amount}</div>
+                  </div>`;
+                });
+                modalBody.innerHTML =
+                  items.join("") || "<div class='status'>No transactions yet.</div>";
+              })
+              .catch(() => {
+                modalBody.innerHTML = "<div class='status'>Unable to load history.</div>";
+              });
+          } else if (action === "topup") {
+            openModal(
+              "Top Up",
+              `
+                <input id="amount" type="number" step="0.01" placeholder="Amount" />
+                <input id="pin" type="password" placeholder="PIN" />
+              `,
+              async () => {
+                modalStatus.textContent = "Submitting...";
+                try {
+                  const amount = document.getElementById("amount").value;
+                  let mfaToken = "";
+                  if (Number(amount) >= HIGH_VALUE_THRESHOLD) {
+                    const challenge = await apiFetch("/api/auth/mfa/challenge", {
+                      method: "POST",
+                      body: JSON.stringify({ action: "deposit", amount }),
+                    });
+                    if (challenge.code) {
+                      showToast(`MFA code (debug): ${challenge.code}`);
+                    }
+                    const code = window.prompt("Enter MFA code");
+                    const verify = await apiFetch("/api/auth/mfa/verify", {
+                      method: "POST",
+                      body: JSON.stringify({ challenge_id: challenge.challenge_id, code }),
+                    });
+                    mfaToken = verify.mfa_token;
+                  }
+                  const payload = {
+                    amount,
+                    pin: document.getElementById("pin").value,
+                    mfa_token: mfaToken,
+                  };
+                  await apiFetch("/api/wallet/deposit", {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                    headers: { "Idempotency-Key": `mob-topup-${Date.now()}` },
+                  });
+                  modalStatus.textContent = "Top up complete.";
+                  showToast("Top up complete");
+                  await refreshBalance();
+                } catch (err) {
+                  modalStatus.textContent = err.message || "Failed";
+                  showToast("Top up failed");
+                }
+              }
+            );
+          } else if (action === "scan") {
+            openModal(
+              "Scan & Pay",
+              `
+                <div class="status">Use this wallet ID to receive:</div>
+                <div class="sub">${walletIdEl ? walletIdEl.textContent : "--"}</div>
+                <input id="toUser" placeholder="Recipient username" />
+                <input id="amount" type="number" step="0.01" placeholder="Amount" />
+                <input id="pin" type="password" placeholder="PIN" />
+              `,
+              async () => {
+                modalStatus.textContent = "Submitting...";
+                try {
+                  const amount = document.getElementById("amount").value;
+                  let mfaToken = "";
+                  if (Number(amount) >= HIGH_VALUE_THRESHOLD) {
+                    const challenge = await apiFetch("/api/auth/mfa/challenge", {
+                      method: "POST",
+                      body: JSON.stringify({ action: "transfer", amount }),
+                    });
+                    if (challenge.code) {
+                      showToast(`MFA code (debug): ${challenge.code}`);
+                    }
+                    const code = window.prompt("Enter MFA code");
+                    const verify = await apiFetch("/api/auth/mfa/verify", {
+                      method: "POST",
+                      body: JSON.stringify({ challenge_id: challenge.challenge_id, code }),
+                    });
+                    mfaToken = verify.mfa_token;
+                  }
+                  const payload = {
+                    to_username: document.getElementById("toUser").value,
+                    amount,
+                    pin: document.getElementById("pin").value,
+                    mfa_token: mfaToken,
+                  };
+                  await apiFetch("/api/wallet/transfer", {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                    headers: { "Idempotency-Key": `mob-scan-${Date.now()}` },
+                  });
+                  modalStatus.textContent = "Sent.";
+                  showToast("Transfer sent");
+                  await refreshBalance();
+                } catch (err) {
+                  modalStatus.textContent = err.message || "Failed";
+                  showToast("Transfer failed");
+                }
+              }
+            );
+          } else {
+            openModal("Coming soon", "<div class='status'>Feature coming soon.</div>", closeModal);
+          }
+        });
+      });
+
+      if (getToken()) {
+        setAuthState(true);
+        authStatus.textContent = "Connected";
+        refreshBalance();
+        refreshProfile();
+      } else {
+        setAuthState(false);
+      }
+      deviceIdEl.textContent = getDeviceId();
+    </script>
+  </body>
+</html>

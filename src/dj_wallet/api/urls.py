@@ -5,6 +5,7 @@ from dj_wallet.portal import (
     portal_docs_view,
     portal_anchors_view,
     portal_view,
+    portal_approvals_view,
 )
 
 from dj_wallet.api import views
@@ -14,8 +15,16 @@ urlpatterns = [
     path("portal/balances", portal_balances_view, name="portal-balances"),
     path("portal/anchors", portal_anchors_view, name="portal-anchors"),
     path("portal/cash", portal_cash_view, name="portal-cash"),
+    path("portal/approvals", portal_approvals_view, name="portal-approvals"),
     path("portal/docs", portal_docs_view, name="portal-docs"),
     path("wallet/balance", views.BalanceView.as_view(), name="wallet-balance"),
+    path("auth/me", views.MeView.as_view(), name="auth-me"),
+    path("auth/pin/set", views.PinSetView.as_view(), name="auth-pin-set"),
+    path("auth/pin/reset", views.PinResetView.as_view(), name="auth-pin-reset"),
+    path("auth/mfa/challenge", views.MfaChallengeView.as_view(), name="auth-mfa-challenge"),
+    path("auth/mfa/verify", views.MfaVerifyView.as_view(), name="auth-mfa-verify"),
+    path("auth/password-reset", views.PasswordResetRequestView.as_view(), name="auth-password-reset"),
+    path("auth/pin/login", views.PinLoginView.as_view(), name="auth-pin-login"),
     path("wallet/nonce", views.NonceView.as_view(), name="wallet-nonce"),
     path("wallet/deposit", views.DepositView.as_view(), name="wallet-deposit"),
     path("wallet/withdraw", views.WithdrawView.as_view(), name="wallet-withdraw"),

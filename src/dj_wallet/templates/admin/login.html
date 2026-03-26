@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .login #container {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+    .login #header {
+      grid-column: 1 / -1;
+    }
+    .login #nav-sidebar {
+      display: none;
+    }
+    .login #content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 80px);
+    }
+    .login #content-main {
+      width: min(420px, 92vw);
+      background: #111823;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 18px;
+      padding: 24px;
+    }
+    .login .form-row {
+      margin-bottom: 14px;
+    }
+    .login label {
+      color: #94a3b8;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .login input[type=text],
+    .login input[type=password] {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 6px;
+    }
+    .login .submit-row {
+      margin-top: 16px;
+    }
+    .login .submit-row input {
+      width: 100%;
+    }
+    .login .help {
+      margin-top: 12px;
+      color: #a6b0bf;
+      font-size: 12px;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  {{ block.super }}
+  <div class="help">
+    <div>Portal: <a href="/api/">Operations Dashboard</a></div>
+    <div>Mobile: <a href="/mobile/">PWA Demo</a></div>
+  </div>
+{% endblock %}

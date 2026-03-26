@@ -3,218 +3,368 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>vWallet Portal</title>
+    <title>2M Platform Administration</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
       :root {
-        --bg: #f6f4f1;
-        --ink: #121212;
-        --accent: #0b4b6f;
-        --accent-2: #f6b93b;
-        --card: #ffffff;
-        --muted: #6b6b6b;
-        --border: #e6e1db;
+        --bg: #0b0f14;
+        --panel: #111823;
+        --panel-2: #0e141d;
+        --ink: #f1f5f9;
+        --muted: #a6b0bf;
+        --accent: #38bdf8;
+        --accent-2: #f97316;
+        --line: rgba(148, 163, 184, 0.18);
+        --success: #22c55e;
+        --danger: #ef4444;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
-        background: radial-gradient(1200px 600px at 10% -10%, #fff1d1, transparent),
-                    radial-gradient(1200px 600px at 90% -10%, #d7f1ff, transparent),
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        background: radial-gradient(1200px 600px at -10% -10%, rgba(56,189,248,0.25), transparent),
+                    radial-gradient(1000px 800px at 110% 10%, rgba(249,115,22,0.25), transparent),
                     var(--bg);
         color: var(--ink);
       }
-      header {
-        padding: 24px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      .layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        min-height: 100vh;
+      }
+      .sidebar {
+        padding: 28px 20px;
+        border-right: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(17,24,35,0.95), rgba(11,15,20,0.95));
+        position: sticky;
+        top: 0;
+        height: 100vh;
       }
       .brand {
         font-weight: 700;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.08em;
+        font-size: 18px;
       }
-      .container {
-        padding: 0 20px 40px;
-        max-width: 900px;
-        margin: 0 auto;
+      .tag {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(56,189,248,0.15);
+        color: var(--accent);
+        font-size: 12px;
+      }
+      .nav {
+        margin-top: 28px;
+        display: grid;
+        gap: 10px;
+      }
+      .nav a {
+        color: var(--ink);
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--panel-2);
+        border: 1px solid transparent;
+      }
+      .nav form { margin: 0; }
+      .nav button {
+        color: var(--ink);
+        background: var(--panel-2);
+        border: 1px solid transparent;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+      }
+      .nav a.active {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .content {
+        padding: 28px 32px 48px;
       }
       .hero {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 18px;
+        display: grid;
+        gap: 14px;
         padding: 24px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        border-radius: 20px;
+        background: linear-gradient(120deg, rgba(56,189,248,0.12), rgba(15,23,42,0.4));
+        border: 1px solid var(--line);
+      }
+      .hero h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+      .hero p { margin: 0; color: var(--muted); }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #001019;
+        background: var(--accent);
+        padding: 10px 16px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
       }
       .grid {
         display: grid;
         gap: 16px;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        margin-top: 16px;
+        margin-top: 18px;
       }
       .card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
         padding: 16px;
       }
+      .stat {
+        font-size: 26px;
+        font-weight: 700;
+      }
+      .subtle { color: var(--muted); font-size: 13px; }
+      .section {
+        margin-top: 26px;
+        display: grid;
+        gap: 16px;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .table th, .table td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .table th { color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
       .pill {
-        display: inline-block;
         padding: 4px 10px;
         border-radius: 999px;
-        background: #eaf6fb;
+        background: rgba(56,189,248,0.12);
         color: var(--accent);
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 11px;
       }
-      .stat {
-        font-size: 28px;
-        font-weight: 700;
-        margin: 6px 0;
+      .pill.warn {
+        background: rgba(249,115,22,0.15);
+        color: var(--accent-2);
       }
-      .list {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-      .list li {
-        padding: 8px 0;
-        border-bottom: 1px solid var(--border);
-      }
-      .list li:last-child { border-bottom: 0; }
-      .cta {
-        margin-top: 18px;
-        display: inline-block;
-        background: var(--accent);
-        color: #fff;
-        padding: 10px 14px;
+      .btn {
+        border: none;
+        padding: 6px 10px;
         border-radius: 10px;
-        text-decoration: none;
         font-weight: 600;
+        cursor: pointer;
       }
-      .muted { color: var(--muted); }
+      .btn.ok { background: rgba(34,197,94,0.2); color: var(--success); }
+      .btn.no { background: rgba(239,68,68,0.2); color: var(--danger); }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .sidebar { position: relative; height: auto; }
+      }
     </style>
   </head>
   <body>
-    <header>
-      <div class="brand">vWallet</div>
-      <div>
-        <a class="pill" style="text-decoration:none; margin-right:8px;" href="/api/portal/balances">Balances</a>
-        <a class="pill" style="text-decoration:none; margin-right:8px;" href="/api/portal/anchors">Anchors</a>
-        <a class="pill" style="text-decoration:none; margin-right:8px;" href="/api/portal/cash">Cash</a>
-        <a class="pill" style="text-decoration:none;" href="/api/portal/docs">API Docs</a>
-      </div>
-    </header>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">2M Platform</div>
+        <div class="tag">Administration</div>
+        <nav class="nav">
+          <a class="active" href="/api/">Dashboard</a>
+          <a href="/api/portal/balances">Balances</a>
+          <a href="/api/portal/anchors">Anchors</a>
+          <a href="/api/portal/cash">Cash</a>
+          <a href="/api/portal/approvals">Approvals</a>
+          <a href="/api/portal/docs">API Docs</a>
+          <a href="/mobile/">Mobile</a>
+          <a href="/admin/">Admin</a>
+          <form method="post" action="/logout/">{% csrf_token %}<button type="submit">Logout</button></form>
+        </nav>
+      </aside>
 
-    <div class="container">
-      <div class="hero">
-        <h1>Welcome to vWallet</h1>
-        <p class="muted">
-          This portal is the operational UI for the mobile money system. Use it
-          to review balances, cash requests, transfers, and anchors.
-        </p>
-        <a class="cta" href="/admin/">Open Admin</a>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <h3>Balance</h3>
-          <div class="stat">
-            {% if balance is not None %}{{ balance }}{% else %}--{% endif %}
+      <main class="content">
+        <section class="hero">
+          <h1>Operational Overview</h1>
+          <p>Live view of balances, cash queues, and on‑chain anchoring for your permissioned mobile money stack.</p>
+          <div>
+            <a class="cta" href="/admin/">Open Admin Console</a>
           </div>
-          <div class="muted">Default wallet</div>
-        </div>
-        <div class="card">
-          <h3>Transactions</h3>
-          <div class="stat">{{ tx_count }}</div>
-          <div class="muted">Total transactions</div>
-        </div>
-        {% if "ops" in user_roles %}
+        </section>
+
+        <section class="grid">
           <div class="card">
-            <h3>Anchors</h3>
+            <div class="subtle">Balance</div>
+            <div class="stat">{% if balance is not None %}{{ balance }}{% else %}--{% endif %}</div>
+            <div class="subtle mono">Default wallet</div>
+          </div>
+          <div class="card">
+            <div class="subtle">Transactions</div>
+            <div class="stat">{{ tx_count }}</div>
+            <div class="subtle mono">Total volume count</div>
+          </div>
+          <div class="card">
+            <div class="subtle">Anchors Pending</div>
             <div class="stat">{{ anchors_pending }}</div>
-            <div class="muted">Pending anchors</div>
+            <div class="subtle mono">On‑chain confirmations</div>
           </div>
-        {% endif %}
-      </div>
-
-      {% if "ops" in user_roles %}
-        <div class="grid">
           <div class="card">
-            <h3>Ops Queue</h3>
-            <div class="stat">{{ ops_cash_pending|default:"0" }}</div>
-            <div class="muted">All pending cash requests</div>
-            {% if ops_pending_list %}
-              <ul class="list">
-                {% for r in ops_pending_list %}
-                  <li>
-                    #{{ r.id }} · {{ r.type }} · {{ r.amount }}
-                    <form method="post" action="/api/cash/approve/{{ r.id }}" style="display:inline;">
-                      {% csrf_token %}
-                      <button class="cta" style="padding:4px 8px; font-size:12px;">Approve</button>
-                    </form>
-                    <form method="post" action="/api/cash/reject/{{ r.id }}" style="display:inline;">
-                      {% csrf_token %}
-                      <button class="cta" style="padding:4px 8px; font-size:12px; background:#9b2c2c;">Reject</button>
-                    </form>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-        </div>
-      {% endif %}
-
-      {% if "agent" in user_roles %}
-        <div class="grid">
-          <div class="card">
-            <h3>Agent Queue</h3>
-            <div class="stat">{{ agent_cash_pending|default:"0" }}</div>
-            <div class="muted">Pending requests for this agent</div>
-            {% if agent_pending_list %}
-              <ul class="list">
-                {% for r in agent_pending_list %}
-                  <li>
-                    #{{ r.id }} · {{ r.type }} · {{ r.amount }}
-                    <form method="post" action="/api/cash/approve/{{ r.id }}" style="display:inline;">
-                      {% csrf_token %}
-                      <button class="cta" style="padding:4px 8px; font-size:12px;">Approve</button>
-                    </form>
-                    <form method="post" action="/api/cash/reject/{{ r.id }}" style="display:inline;">
-                      {% csrf_token %}
-                      <button class="cta" style="padding:4px 8px; font-size:12px; background:#9b2c2c;">Reject</button>
-                    </form>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-        </div>
-      {% endif %}
-
-      <div class="grid">
-        {% if "agent" in user_roles or "ops" in user_roles %}
-          <div class="card">
-            <h3>Cash Requests (Pending)</h3>
+            <div class="subtle">Cash Requests</div>
             <div class="stat">{{ cash_pending }}</div>
-            <div class="muted">Awaiting approval</div>
+            <div class="subtle mono">Awaiting approvals</div>
           </div>
+        </section>
+
+        {% if "ops" in user_roles %}
+          <section class="section">
+            <div class="card">
+              <h3>Ops Cash Queue</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if ops_pending_list %}
+                    {% for r in ops_pending_list %}
+                      <tr>
+                        <td>#{{ r.id }}</td>
+                        <td><span class="pill">{{ r.type }}</span></td>
+                        <td>{{ r.amount }}</td>
+                        <td class="mono">{{ r.created_at }}</td>
+                        <td>
+                          <form method="post" action="/api/cash/approve/{{ r.id }}" style="display:inline;">{% csrf_token %}<button class="btn ok">Approve</button></form>
+                          <form method="post" action="/api/cash/reject/{{ r.id }}" style="display:inline;">{% csrf_token %}<button class="btn no">Reject</button></form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="5" class="subtle">No pending requests.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="card">
+              <h3>Approvals Queue</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Action</th>
+                    <th>Amount</th>
+                    <th>Approvals</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if approvals_list %}
+                    {% for a in approvals_list %}
+                      <tr>
+                        <td>#{{ a.id }}</td>
+                        <td><span class="pill warn">{{ a.action }}</span></td>
+                        <td>{{ a.amount }}</td>
+                        <td>
+                          {% if a.resolved_by_id %}
+                            <span class="pill">1/2</span>
+                          {% else %}
+                            <span class="pill warn">0/2</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <form method="post" action="/api/approvals/approve/{{ a.id }}" style="display:inline;">{% csrf_token %}<button class="btn ok">Approve</button></form>
+                          <form method="post" action="/api/approvals/reject/{{ a.id }}" style="display:inline;">{% csrf_token %}<button class="btn no">Reject</button></form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="5" class="subtle">No pending approvals.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </section>
         {% endif %}
-        <div class="card">
-          <h3>Recent Cash Requests</h3>
-          <ul class="list">
-            {% if recent_cash %}
-              {% for r in recent_cash %}
-                <li>
-                  {{ r.type }} · {{ r.status }} · {{ r.amount }}
-                  <span class="muted">({{ r.created_at }})</span>
-                </li>
-              {% endfor %}
-            {% else %}
-              <li class="muted">No recent cash requests.</li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
+
+        {% if "agent" in user_roles %}
+          <section class="section">
+            <div class="card">
+              <h3>Agent Queue</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if agent_pending_list %}
+                    {% for r in agent_pending_list %}
+                      <tr>
+                        <td>#{{ r.id }}</td>
+                        <td><span class="pill">{{ r.type }}</span></td>
+                        <td>{{ r.amount }}</td>
+                        <td class="mono">{{ r.created_at }}</td>
+                        <td>
+                          <form method="post" action="/api/cash/approve/{{ r.id }}" style="display:inline;">{% csrf_token %}<button class="btn ok">Approve</button></form>
+                          <form method="post" action="/api/cash/reject/{{ r.id }}" style="display:inline;">{% csrf_token %}<button class="btn no">Reject</button></form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr><td colspan="5" class="subtle">No pending requests.</td></tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        {% endif %}
+
+        <section class="section">
+          <div class="card">
+            <h3>Recent Cash Requests</h3>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if recent_cash %}
+                  {% for r in recent_cash %}
+                    <tr>
+                      <td><span class="pill">{{ r.type }}</span></td>
+                      <td class="mono">{{ r.status }}</td>
+                      <td>{{ r.amount }}</td>
+                      <td class="mono">{{ r.created_at }}</td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr><td colspan="4" class="subtle">No recent cash requests.</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
     </div>
   </body>
 </html>

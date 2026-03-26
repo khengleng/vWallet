@@ -6,10 +6,10 @@ from django.apps import AppConfig
 
 
 class DjangoWalletsConfig(AppConfig):
-    """Configuration for the Django Wallets application."""
+    """Configuration for the 2M Wallets application."""
 
     name = "dj_wallet"
-    verbose_name = "Django Wallets"
+    verbose_name = "2M Wallets"
     default_auto_field = "django.db.models.BigAutoField"
 
     def ready(self):

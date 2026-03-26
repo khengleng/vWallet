@@ -1,0 +1,301 @@
+{% extends "admin/base.html" %}
+
+{% block title %}vWallet Admin{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+    body {
+      background: radial-gradient(1200px 600px at -10% -10%, rgba(56,189,248,0.18), transparent),
+                  radial-gradient(1000px 800px at 110% 10%, rgba(249,115,22,0.2), transparent),
+                  #0b0f14;
+      color: #e2e8f0;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    #content, #content-related {
+      color: #e2e8f0;
+    }
+    #container {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+    #header {
+      background: #0f172a;
+      grid-column: 1 / -1;
+    }
+    #header a:link, #header a:visited {
+      color: #e2e8f0;
+    }
+    a:link, a:visited {
+      color: #38bdf8;
+    }
+    .breadcrumbs {
+      background: #0f172a;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      color: #cbd5f5;
+    }
+    .module, .inline-group, .tabular.inline-related, .stacked.inline-related {
+      background: #111823;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 14px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    #content h1, #content h2, #content h3, #content h4 {
+      color: #e2e8f0;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    #content h1 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    #content h2 {
+      font-size: 18px;
+      margin-top: 18px;
+    }
+    .module h2, .module caption, .inline-group h2 {
+      background: #0e141d;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+    table thead th {
+      background: #0e141d;
+      color: #94a3b8;
+    }
+    table tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.35);
+    }
+    table tbody tr:hover {
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .module table th, .module table td {
+      padding: 12px 10px;
+    }
+    .paginator, .pagination {
+      margin-top: 12px;
+      background: #0f141d;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+    .submit-row input, .button, input[type=submit], input[type=button] {
+      background: #38bdf8;
+      border: none;
+      color: #001019;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 600;
+    }
+    .submit-row input.default {
+      background: #22c55e;
+    }
+    .object-tools a {
+      background: #0e141d;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 10px;
+      color: #e2e8f0;
+    }
+    .object-tools a:hover {
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+    .changelist-form .actions select,
+    .changelist-form .actions input {
+      background: #0f141d;
+      color: #e2e8f0;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 8px;
+    }
+    .actions .button {
+      background: #38bdf8;
+      color: #001019;
+      border-radius: 10px;
+    }
+    .filters {
+      background: #0f141d;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .filters h2, .filters h3 {
+      color: #e2e8f0;
+    }
+    .filters a {
+      color: #cbd5f5;
+    }
+    .form-row {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    input, select, textarea {
+      background: #0f141d;
+      color: #e2e8f0;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 8px;
+    }
+    .related-widget-wrapper-link,
+    .selector-chooseall, .selector-clearall {
+      color: #38bdf8;
+    }
+    .help, .help-tooltip {
+      color: #94a3b8;
+    }
+    #site-name a {
+      color: #e2e8f0;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .vwallet-nav {
+      margin-top: 6px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+    .vwallet-nav a {
+      color: #e2e8f0;
+      text-decoration: none;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .vwallet-nav form { margin: 0; }
+    .vwallet-nav button {
+      color: #e2e8f0;
+      text-decoration: none;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .vwallet-nav a.active {
+      color: #38bdf8;
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.25);
+    }
+    #nav-sidebar {
+      background: #0b1220;
+      border-right: 1px solid rgba(148, 163, 184, 0.18);
+      width: 240px;
+      align-self: stretch;
+    }
+    #content-related, #content {
+      max-width: none;
+      width: 100%;
+    }
+    #content {
+      padding: 24px 28px 48px;
+    }
+    #content-related {
+      padding: 24px 28px 48px 0;
+    }
+    #nav-sidebar .vwallet-links {
+      display: grid;
+      gap: 8px;
+      margin: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+    #nav-sidebar .vwallet-links a {
+      color: #e2e8f0;
+      text-decoration: none;
+      background: rgba(56, 189, 248, 0.12);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    #nav-sidebar .vwallet-links form { margin: 0; }
+    #nav-sidebar .vwallet-links button {
+      color: #e2e8f0;
+      text-decoration: none;
+      background: rgba(56, 189, 248, 0.12);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+    #nav-sidebar .vwallet-links a.active {
+      color: #38bdf8;
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.25);
+    }
+    #nav-sidebar .vwallet-links {
+      position: sticky;
+      top: 12px;
+    }
+    @media (max-width: 1024px) {
+      #container {
+        grid-template-columns: 200px 1fr;
+      }
+      #nav-sidebar {
+        width: 200px;
+      }
+    }
+    @media (max-width: 768px) {
+      #container {
+        grid-template-columns: 1fr;
+      }
+      #nav-sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block branding %}
+  <h1 id="site-name"><a href="/api/">vWallet Admin</a></h1>
+  <div class="vwallet-nav">
+    <a href="/api/">Portal</a>
+    <a href="/api/portal/balances">Balances</a>
+    <a href="/api/portal/anchors">Anchors</a>
+    <a href="/api/portal/cash">Cash</a>
+    <a href="/api/portal/docs">API Docs</a>
+    <a href="/mobile/">Mobile</a>
+    <form method="post" action="/logout/">{% csrf_token %}<button type="submit">Logout</button></form>
+  </div>
+{% endblock %}
+
+{% block nav-sidebar %}
+  <div class="vwallet-links">
+    <a href="/api/">Portal</a>
+    <a href="/api/portal/balances">Balances</a>
+    <a href="/api/portal/anchors">Anchors</a>
+    <a href="/api/portal/cash">Cash</a>
+    <a href="/api/portal/docs">API Docs</a>
+    <a href="/mobile/">Mobile</a>
+    <form method="post" action="/logout/">{% csrf_token %}<button type="submit">Logout</button></form>
+  </div>
+  {{ block.super }}
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block footer %}
+  {{ block.super }}
+  <script>
+    (function () {
+      const path = window.location.pathname;
+      document.querySelectorAll(".vwallet-nav a, .vwallet-links a").forEach((link) => {
+        const href = link.getAttribute("href");
+        if (href && path.startsWith(href)) {
+          link.classList.add("active");
+        }
+      });
+    })();
+  </script>
+{% endblock %}

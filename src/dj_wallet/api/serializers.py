@@ -11,10 +11,13 @@ class AmountSerializer(serializers.Serializer):
     nonce = serializers.CharField(required=False)
     signature = serializers.CharField(required=False)
     key_id = serializers.CharField(required=False)
+    pin = serializers.CharField(required=False, allow_blank=True)
+    mfa_token = serializers.CharField(required=False, allow_blank=True)
 
 
 class TransferSerializer(serializers.Serializer):
-    to_user_id = serializers.IntegerField()
+    to_user_id = serializers.IntegerField(required=False)
+    to_username = serializers.CharField(required=False, allow_blank=True)
     amount = serializers.DecimalField(
         max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
     )
@@ -23,6 +26,9 @@ class TransferSerializer(serializers.Serializer):
     signature = serializers.CharField(required=False)
     key_id = serializers.CharField(required=False)
     note = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    memo = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    pin = serializers.CharField(required=False, allow_blank=True)
+    mfa_token = serializers.CharField(required=False, allow_blank=True)
 
 
 class PurchaseSerializer(serializers.Serializer):
@@ -45,6 +51,8 @@ class CashRequestSerializer(serializers.Serializer):
         max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
     )
     meta = serializers.JSONField(required=False)
+    pin = serializers.CharField(required=False, allow_blank=True)
+    mfa_token = serializers.CharField(required=False, allow_blank=True)
 
 
 class StatementQuerySerializer(serializers.Serializer):

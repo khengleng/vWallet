@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>2M Platform Administration - Cash</title>
+    <title>2M Platform Administration - Approvals</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
       :root {
@@ -13,9 +13,10 @@
         --ink: #f1f5f9;
         --muted: #a6b0bf;
         --accent: #38bdf8;
+        --line: rgba(148, 163, 184, 0.18);
         --success: #22c55e;
         --danger: #ef4444;
-        --line: rgba(148, 163, 184, 0.18);
+        --warn: #f97316;
       }
       * { box-sizing: border-box; }
       body {
@@ -26,11 +27,7 @@
                     var(--bg);
         color: var(--ink);
       }
-      .layout {
-        display: grid;
-        grid-template-columns: 240px 1fr;
-        min-height: 100vh;
-      }
+      .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
       .sidebar {
         padding: 28px 20px;
         border-right: 1px solid var(--line);
@@ -49,11 +46,7 @@
         color: var(--accent);
         font-size: 12px;
       }
-      .nav {
-        margin-top: 28px;
-        display: grid;
-        gap: 10px;
-      }
+      .nav { margin-top: 28px; display: grid; gap: 10px; }
       .nav a {
         text-decoration: none;
         color: var(--ink);
@@ -76,10 +69,7 @@
         text-align: left;
         cursor: pointer;
       }
-      .nav a.active {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
+      .nav a.active { border-color: var(--accent); color: var(--accent); }
       .content { padding: 28px 32px 48px; max-width: 1100px; }
       .card {
         background: var(--panel);
@@ -88,15 +78,19 @@
         padding: 16px;
         margin-bottom: 16px;
       }
-      .stat { font-size: 28px; font-weight: 700; }
       table { width: 100%; border-collapse: collapse; }
       th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
       th { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.08em; }
-      .muted { color: var(--muted); }
-      .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
+      .pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(56,189,248,0.12);
+        color: var(--accent);
+        font-size: 11px;
+      }
       .pill.warn {
         background: rgba(249,115,22,0.15);
-        color: #f97316;
+        color: var(--warn);
       }
       .btn {
         border: none;
@@ -107,7 +101,7 @@
       }
       .btn.ok { background: rgba(34,197,94,0.2); color: var(--success); }
       .btn.no { background: rgba(239,68,68,0.2); color: var(--danger); }
-      form { display: inline; }
+      .muted { color: var(--muted); }
       @media (max-width: 900px) {
         .layout { grid-template-columns: 1fr; }
         .sidebar { position: relative; height: auto; }
@@ -124,8 +118,8 @@
           <a href="/api/">Dashboard</a>
           <a href="/api/portal/balances">Balances</a>
           <a href="/api/portal/anchors">Anchors</a>
-          <a class="active" href="/api/portal/cash">Cash</a>
-          <a href="/api/portal/approvals">Approvals</a>
+          <a href="/api/portal/cash">Cash</a>
+          <a class="active" href="/api/portal/approvals">Approvals</a>
           <a href="/api/portal/docs">API Docs</a>
           <a href="/mobile/">Mobile</a>
           <a href="/admin/">Admin</a>
@@ -134,85 +128,8 @@
       </aside>
 
       <main class="content">
-      <div class="card">
-        <h2>Cash Requests</h2>
-        <div class="stat">{{ cash_pending }}</div>
-        <div class="muted mono">Pending cash requests for this user</div>
-      </div>
-
-      {% if "ops" in user_roles %}
         <div class="card">
-          <h3>Ops Queue</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Created</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if ops_pending_list %}
-                {% for r in ops_pending_list %}
-                  <tr>
-                    <td>#{{ r.id }}</td>
-                    <td>{{ r.type }}</td>
-                    <td>{{ r.amount }}</td>
-                    <td class="mono">{{ r.created_at }}</td>
-                    <td>
-                      <form method="post" action="/api/cash/approve/{{ r.id }}">{% csrf_token %}<button class="btn ok">Approve</button></form>
-                      <form method="post" action="/api/cash/reject/{{ r.id }}">{% csrf_token %}<button class="btn no">Reject</button></form>
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% else %}
-                <tr><td colspan="5" class="muted">No pending ops requests.</td></tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
-      {% endif %}
-
-      {% if "agent" in user_roles %}
-        <div class="card">
-          <h3>Agent Queue</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Created</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if agent_pending_list %}
-                {% for r in agent_pending_list %}
-                  <tr>
-                    <td>#{{ r.id }}</td>
-                    <td>{{ r.type }}</td>
-                    <td>{{ r.amount }}</td>
-                    <td class="mono">{{ r.created_at }}</td>
-                    <td>
-                      <form method="post" action="/api/cash/approve/{{ r.id }}">{% csrf_token %}<button class="btn ok">Approve</button></form>
-                      <form method="post" action="/api/cash/reject/{{ r.id }}">{% csrf_token %}<button class="btn no">Reject</button></form>
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% else %}
-                <tr><td colspan="5" class="muted">No pending agent requests.</td></tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
-      {% endif %}
-
-      {% if "ops" in user_roles %}
-        <div class="card">
-          <h3>Approvals Queue</h3>
+          <h2>Approvals Queue</h2>
           <table>
             <thead>
               <tr>
@@ -249,37 +166,6 @@
             </tbody>
           </table>
         </div>
-      {% endif %}
-
-      <div class="card">
-        <h3>Recent Cash Requests</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Amount</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if recent_cash %}
-              {% for r in recent_cash %}
-                <tr>
-                  <td>#{{ r.id }}</td>
-                  <td>{{ r.type }}</td>
-                  <td class="mono">{{ r.status }}</td>
-                  <td>{{ r.amount }}</td>
-                  <td class="mono">{{ r.created_at }}</td>
-                </tr>
-              {% endfor %}
-            {% else %}
-              <tr><td colspan="5" class="muted">No recent cash requests.</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
       </main>
     </div>
   </body>

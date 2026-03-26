@@ -5,6 +5,7 @@ from django.db import models
 
 from .abstract_models import AbstractTransaction, AbstractTransfer, AbstractWallet
 from .conf import wallet_settings
+import uuid
 
 
 class Wallet(AbstractWallet):
@@ -72,6 +73,45 @@ class TransactionSignature(models.Model):
     )
     signer_id = models.PositiveIntegerField(null=True, blank=True)
     signer = GenericForeignKey("signer_type", "signer_id")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class MobileSecurityProfile(models.Model):
+    """
+    Mobile PIN profile for a user (PWA / native).
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="mobile_security"
+    )
+    pin_hash = models.CharField(max_length=128, blank=True, default="")
+    pin_set_at = models.DateTimeField(null=True, blank=True)
+    pin_failed_count = models.PositiveSmallIntegerField(default=0)
+    pin_locked_until = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class MfaChallenge(models.Model):
+    """
+    MFA challenge for high-value mobile actions.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    action = models.CharField(max_length=64)
+    amount = models.DecimalField(
+        max_digits=64, decimal_places=wallet_settings.WALLET_MATH_SCALE
+    )
+    code_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+    mfa_token = models.CharField(max_length=128, blank=True, default="")
+    mfa_expires_at = models.DateTimeField(null=True, blank=True)
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
+    locked_until = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -201,7 +241,16 @@ class ApprovalRequest(models.Model):
         blank=True,
         related_name="approval_requests_resolved",
     )
+    second_approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approval_requests_second_approved",
+    )
     resolved_at = models.DateTimeField(null=True, blank=True)
+    second_approved_at = models.DateTimeField(null=True, blank=True)
+    required_approvals = models.PositiveSmallIntegerField(default=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

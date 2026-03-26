@@ -3,67 +3,129 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>vWallet API Docs</title>
+    <title>2M Platform Administration - API Docs</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
       :root {
-        --bg: #f6f4f1;
-        --ink: #121212;
-        --accent: #0b4b6f;
-        --card: #ffffff;
-        --muted: #6b6b6b;
-        --border: #e6e1db;
+        --bg: #0b0f14;
+        --panel: #111823;
+        --panel-2: #0e141d;
+        --ink: #f1f5f9;
+        --muted: #a6b0bf;
+        --accent: #38bdf8;
+        --line: rgba(148, 163, 184, 0.18);
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
-        background: radial-gradient(1200px 600px at 10% -10%, #fff1d1, transparent),
-                    radial-gradient(1200px 600px at 90% -10%, #d7f1ff, transparent),
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        background: radial-gradient(900px 500px at -10% -10%, rgba(56,189,248,0.25), transparent),
+                    radial-gradient(900px 700px at 110% 10%, rgba(249,115,22,0.2), transparent),
                     var(--bg);
         color: var(--ink);
       }
-      header {
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      .layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        min-height: 100vh;
       }
-      .brand { font-weight: 700; letter-spacing: 0.04em; }
-      .nav a { margin-left: 12px; color: var(--accent); text-decoration: none; font-weight: 600; }
-      .container { padding: 0 20px 40px; max-width: 1000px; margin: 0 auto; }
+      .sidebar {
+        padding: 28px 20px;
+        border-right: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(17,24,35,0.95), rgba(11,15,20,0.95));
+        position: sticky;
+        top: 0;
+        height: 100vh;
+      }
+      .brand { font-weight: 700; letter-spacing: 0.08em; font-size: 18px; }
+      .tag {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(56,189,248,0.15);
+        color: var(--accent);
+        font-size: 12px;
+      }
+      .nav {
+        margin-top: 28px;
+        display: grid;
+        gap: 10px;
+      }
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        background: var(--panel-2);
+        border: 1px solid transparent;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+      }
+      .nav form { margin: 0; }
+      .nav button {
+        text-decoration: none;
+        color: var(--ink);
+        background: var(--panel-2);
+        border: 1px solid transparent;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+      }
+      .nav a.active {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .content { padding: 28px 32px 48px; max-width: 1100px; }
       .card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
         padding: 16px;
         margin-bottom: 16px;
       }
-      code { background: #f3f1ee; padding: 2px 6px; border-radius: 6px; }
+      code { background: #0f172a; padding: 2px 6px; border-radius: 6px; }
       pre {
         background: #0f1b26;
         color: #e8f1f7;
         padding: 12px;
         border-radius: 10px;
         overflow-x: auto;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 12px;
       }
       .muted { color: var(--muted); }
       table { width: 100%; border-collapse: collapse; }
-      th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
-      th { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+      th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
+      th { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.08em; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .sidebar { position: relative; height: auto; }
+        .content { max-width: none; }
+      }
     </style>
   </head>
   <body>
-    <header>
-      <div class="brand">vWallet</div>
-      <nav class="nav">
-        <a href="/api/">Dashboard</a>
-        <a href="/api/portal/balances">Balances</a>
-        <a href="/api/portal/anchors">Anchors</a>
-        <a href="/api/portal/cash">Cash</a>
-      </nav>
-    </header>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">2M Platform</div>
+        <div class="tag">Administration</div>
+        <nav class="nav">
+          <a href="/api/">Dashboard</a>
+          <a href="/api/portal/balances">Balances</a>
+          <a href="/api/portal/anchors">Anchors</a>
+          <a href="/api/portal/cash">Cash</a>
+          <a href="/api/portal/approvals">Approvals</a>
+          <a class="active" href="/api/portal/docs">API Docs</a>
+          <a href="/mobile/">Mobile</a>
+          <a href="/admin/">Admin</a>
+          <form method="post" action="/logout/">{% csrf_token %}<button type="submit">Logout</button></form>
+        </nav>
+      </aside>
 
-    <div class="container">
+      <main class="content">
       <div class="card">
         <h2>Mobile API Docs</h2>
         <p class="muted">Base URL: <code>/api</code></p>
@@ -113,33 +175,7 @@ Authorization: Token &lt;TOKEN&gt;
           </tbody>
         </table>
       </div>
-
-      <div class="card">
-        <h3>Funding Sources</h3>
-        <table>
-          <thead><tr><th>Method</th><th>Path</th><th>Use</th></tr></thead>
-          <tbody>
-            <tr><td>GET</td><td><code>/wallet/funding-sources</code></td><td>List sources</td></tr>
-            <tr><td>POST</td><td><code>/wallet/funding-sources</code></td><td>Add source</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card">
-        <h3>Signed Actions</h3>
-        <p class="muted">For withdraw/transfer, sign this payload with the holder key:</p>
-<pre>{
-  "holder_id": &lt;USER_ID&gt;,
-  "holder_type": "auth.user",
-  "action": "transfer",
-  "amount": "1.00000000",
-  "nonce": "&lt;NONCE&gt;"
-}</pre>
-        <p class="muted">Then send:</p>
-<pre>POST /api/wallet/transfer
-Authorization: Token &lt;TOKEN&gt;
-{"to_user_id":1,"amount":"1.00000000","nonce":"...","signature":"0x...","key_id":"user-0x..."}</pre>
-      </div>
+      </main>
     </div>
   </body>
 </html>

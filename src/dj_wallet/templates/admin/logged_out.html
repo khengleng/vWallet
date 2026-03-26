@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .logout #nav-sidebar {
+      display: none;
+    }
+    .logout-wrap {
+      display: grid;
+      place-items: center;
+      min-height: calc(100vh - 120px);
+    }
+    .logout-card {
+      width: min(420px, 92vw);
+      background: #111823;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+    }
+    .logout-card a {
+      color: #38bdf8;
+      text-decoration: none;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="logout-wrap">
+    <div class="logout-card">
+      <h2>{% trans "You are logged out" %}</h2>
+      <p>{% trans "Thanks for using vWallet Admin." %}</p>
+      <p><a href="{% url 'admin:login' %}">{% trans "Log in again" %}</a></p>
+      <p><a href="/api/">{% trans "Back to Portal" %}</a></p>
+    </div>
+  </div>
+{% endblock %}
