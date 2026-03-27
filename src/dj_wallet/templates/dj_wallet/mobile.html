@@ -687,6 +687,20 @@
               message = resp.statusText || "Request failed";
             }
           }
+          const friendly = {
+            kyc_required: "KYC required. Please verify your account.",
+            kyc_rejected: "KYC rejected. Contact support.",
+            sanctions_blocked: "Account blocked by compliance.",
+            account_suspended: "Account suspended.",
+            transfer_role_limit: "Transfer exceeds your role limit.",
+            withdraw_role_limit: "Withdraw exceeds your role limit.",
+            daily_limit_exceeded: "Daily limit exceeded.",
+            monthly_limit_exceeded: "Monthly limit exceeded.",
+            role_daily_limit_exceeded: "Role daily limit exceeded.",
+            role_monthly_limit_exceeded: "Role monthly limit exceeded.",
+            min_balance_required: "Minimum balance required.",
+          };
+          if (friendly[message]) message = friendly[message];
           throw new Error(message);
         }
         return resp.json();

@@ -113,6 +113,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ],
+    "EXCEPTION_HANDLER": "dj_wallet.api.exceptions.wallet_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": [
         "dj_wallet.api.throttles.BurstRateThrottle",
         "dj_wallet.api.throttles.SustainedRateThrottle",
