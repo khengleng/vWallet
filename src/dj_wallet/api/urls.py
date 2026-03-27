@@ -56,4 +56,5 @@ urlpatterns = [
         views.ApprovalRejectView.as_view(),
         name="approval-reject",
     ),
+    path("approvals/list", views.ApprovalListView.as_view(), name="approval-list"),
 ]

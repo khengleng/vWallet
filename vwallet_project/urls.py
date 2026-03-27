@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from dj_wallet.api.health import health_view
 from dj_wallet.api.views import MobileAuthTokenView
 from dj_wallet.portal import mobile_view
-from dj_wallet.pwa import manifest, service_worker, offline_page
+from dj_wallet.pwa import manifest, service_worker, offline_page, favicon
 
 
 urlpatterns = [
@@ -18,6 +18,7 @@ urlpatterns = [
     path("manifest.webmanifest", manifest, name="pwa-manifest"),
     path("sw.js", service_worker, name="pwa-sw"),
     path("offline/", offline_page, name="pwa-offline"),
+    path("favicon.ico", favicon, name="favicon"),
     path("api/auth/token", csrf_exempt(MobileAuthTokenView.as_view()), name="auth-token"),
     path(
         "api/auth/token/",

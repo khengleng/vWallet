@@ -4,7 +4,7 @@ import secrets
 from datetime import timedelta
 from decimal import Decimal
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import Group
 from django.contrib.auth.forms import PasswordResetForm
@@ -162,11 +162,25 @@ class MobileAuthTokenView(ObtainAuthToken):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(
-            data=request.data, context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
+        username = (request.data.get("username") or "").strip()
+        password = request.data.get("password") or ""
+        if not username or not password:
+            return Response(
+                {"detail": "missing_credentials"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = authenticate(request, username=username, password=password)
+        if not user:
+            User = get_user_model()
+            candidate = User.objects.filter(email__iexact=username).first()
+            if candidate and candidate.check_password(password):
+                user = candidate
+        if not user:
+            return Response(
+                {"detail": "invalid_credentials"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         token, _ = Token.objects.get_or_create(user=user)
         return Response({"token": token.key})
 
@@ -1035,6 +1049,34 @@ class ApprovalApproveView(APIView):
             return Response({"status": "approved", "transfer_id": str(transfer.uuid)})
 
         return Response({"detail": "unsupported_action"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ApprovalListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    throttle_classes = [BurstRateThrottle, SustainedRateThrottle]
+
+    def get(self, request):
+        ct = ContentType.objects.get_for_model(request.user)
+        is_ops = WalletRoleAssignment.objects.filter(
+            holder_type=ct, holder_id=request.user.pk, role__slug="ops"
+        ).exists()
+        if not is_ops:
+            return Response({"approvals": []})
+
+        approvals = ApprovalRequest.objects.filter(status=ApprovalRequest.STATUS_PENDING).order_by("-created_at")[:20]
+        payload = []
+        for approval in approvals:
+            progress = "1/2" if approval.resolved_by_id else "0/2"
+            payload.append(
+                {
+                    "id": approval.id,
+                    "action": approval.action,
+                    "amount": str(approval.amount),
+                    "progress": progress,
+                }
+            )
+        return Response({"approvals": payload})
 
 
 class ApprovalRejectView(APIView):

@@ -27,6 +27,15 @@ def manifest(request):
     return HttpResponse(body, content_type="application/manifest+json")
 
 
+def favicon(request):
+    svg = """<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>
+<rect width='64' height='64' fill='#0d0f14'/>
+<circle cx='32' cy='32' r='22' fill='#22d3ee'/>
+<text x='32' y='39' font-size='20' text-anchor='middle' fill='white' font-family='Arial'>2M</text>
+</svg>"""
+    return HttpResponse(svg, content_type="image/svg+xml")
+
+
 def offline_page(request):
     body = """<!doctype html>
 <html lang="en">

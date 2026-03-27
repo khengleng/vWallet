@@ -10,6 +10,7 @@
     <link rel="apple-touch-startup-image" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1125' height='2436'><rect width='1125' height='2436' fill='%230d0f14'/><circle cx='562' cy='1100' r='220' fill='%2322d3ee'/><text x='562' y='1160' font-size='140' text-anchor='middle' fill='white' font-family='Arial'>2M</text></svg>" />
     <meta name="theme-color" content="#0d0f14" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><rect width='180' height='180' fill='%230d0f14'/><circle cx='90' cy='90' r='60' fill='%2322d3ee'/><text x='90' y='106' font-size='44' text-anchor='middle' fill='white' font-family='Arial'>vW</text></svg>" />
     <title>2M Platform Mobile</title>
     <style>
@@ -401,6 +402,7 @@
         <input id="authPin" placeholder="pin (mobile only)" type="password" autocomplete="one-time-code" />
         <button type="button" id="loginBtn">Login</button>
         <button type="button" id="pinLoginBtn">Login with PIN</button>
+        <button type="button" id="switchUserBtn" class="hidden">Switch User</button>
         <div class="link" id="registerLink">Create account</div>
         <div class="link" id="resetLink">Forgot password</div>
       </div>
@@ -466,6 +468,10 @@
             <div>{{ user_roles|join:", " }}</div>
           </div>
         </div>
+        <div class="list" id="mobileApprovalsSection" style="display:none;">
+          <h3>Approvals Queue</h3>
+          <div id="mobileApprovalsList" class="sub">No pending approvals.</div>
+        </div>
       </section>
 
       <section class="section" data-section="profile">
@@ -488,6 +494,12 @@
             <div>
               <input id="pinInput" type="password" placeholder="4-8 digits" />
               <button type="button" id="pinSave">Save</button>
+            </div>
+          </div>
+          <div class="kv">
+            <div class="label">Reset PIN</div>
+            <div>
+              <button type="button" id="pinResetBtn">Reset</button>
             </div>
           </div>
           <div class="kv">
@@ -539,6 +551,7 @@
       const loginBtn = document.getElementById("loginBtn");
       const pinLoginBtn = document.getElementById("pinLoginBtn");
       const logoutBtn = document.getElementById("logoutBtn");
+      const switchUserBtn = document.getElementById("switchUserBtn");
       const registerLink = document.getElementById("registerLink");
       const resetLink = document.getElementById("resetLink");
       const modal = document.getElementById("actionModal");
@@ -556,6 +569,9 @@
       const profileUsername = document.getElementById("profileUsername");
       const pinInput = document.getElementById("pinInput");
       const pinSave = document.getElementById("pinSave");
+      const pinResetBtn = document.getElementById("pinResetBtn");
+      const mobileApprovalsSection = document.getElementById("mobileApprovalsSection");
+      const mobileApprovalsList = document.getElementById("mobileApprovalsList");
       const HIGH_VALUE_THRESHOLD = Number("{{ high_value_threshold|default:'5000' }}");
       const toast = document.getElementById("toast");
 
@@ -642,6 +658,7 @@
         authUser.classList.toggle("hidden", connected);
         authPass.classList.toggle("hidden", connected);
         logoutBtn.classList.toggle("hidden", !connected);
+        switchUserBtn.classList.toggle("hidden", !connected);
         sessionStatus.textContent = connected ? "Authenticated" : "Guest";
         roleBadge.textContent = connected ? "Customer" : "Guest";
         profileUsername.textContent = connected ? "…" : "guest";
@@ -661,7 +678,16 @@
         const resp = await fetch(path, { ...opts, headers });
         if (!resp.ok) {
           const text = await resp.text();
-          throw new Error(text || resp.statusText);
+          let message = text || resp.statusText;
+          try {
+            const data = JSON.parse(text);
+            message = data.detail || data.message || JSON.stringify(data);
+          } catch {
+            if (text && text.includes("<html")) {
+              message = resp.statusText || "Request failed";
+            }
+          }
+          throw new Error(message);
         }
         return resp.json();
       }
@@ -682,8 +708,27 @@
           roleBadge.textContent = role;
           sessionStatus.textContent = "Authenticated";
           profileUsername.textContent = data.username || "customer";
+          if (data.roles && data.roles.includes("ops")) {
+            mobileApprovalsSection.style.display = "block";
+            loadApprovals();
+          } else {
+            mobileApprovalsSection.style.display = "none";
+          }
         } catch {
           roleBadge.textContent = "Customer";
+        }
+      }
+
+      async function loadApprovals() {
+        try {
+          const resp = await apiFetch("/api/approvals/list");
+          const items = (resp.approvals || []).map(
+            (a) =>
+              `<div class="item"><div>${a.action} · ${a.amount}</div><div>${a.progress}</div></div>`
+          );
+          mobileApprovalsList.innerHTML = items.join("") || "No pending approvals.";
+        } catch {
+          mobileApprovalsList.textContent = "Unable to load approvals.";
         }
       }
 
@@ -707,6 +752,7 @@
 
       async function login() {
         authStatus.textContent = "Signing in...";
+        clearToken();
         try {
           const resp = await fetch("/api/auth/token", {
             method: "POST",
@@ -728,11 +774,14 @@
           await refreshProfile();
         } catch (err) {
           authStatus.textContent = err.message || "Login failed";
+          clearToken();
+          setAuthState(false);
         }
       }
 
       async function loginWithPin() {
         authStatus.textContent = "Signing in...";
+        clearToken();
         try {
           const payload = {
             username: authUser.value,
@@ -751,6 +800,8 @@
           await refreshProfile();
         } catch (err) {
           authStatus.textContent = err.message || "Login failed";
+          clearToken();
+          setAuthState(false);
         }
       }
 
@@ -764,7 +815,27 @@
 
       loginBtn.addEventListener("click", login);
       pinLoginBtn.addEventListener("click", loginWithPin);
-      logoutBtn.addEventListener("click", logout);
+      logoutBtn.addEventListener("click", () => {
+        openModal(
+          "Confirm Logout",
+          `<div class="status">Are you sure you want to sign out?</div>`,
+          () => {
+            logout();
+            closeModal();
+          }
+        );
+      });
+      switchUserBtn.addEventListener("click", () => {
+        openModal(
+          "Switch User",
+          `<div class="status">Sign out and return to login?</div>`,
+          () => {
+            logout();
+            closeModal();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        );
+      });
       signedOutLogin.addEventListener("click", () => {
         signedOutScreen.style.display = "none";
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -834,6 +905,40 @@
 
       modalCancel.addEventListener("click", closeModal);
       pinSave.addEventListener("click", savePin);
+      pinResetBtn.addEventListener("click", async () => {
+        openModal(
+          "Reset PIN",
+          `
+            <div class="status">MFA is required to reset your PIN.</div>
+          `,
+          async () => {
+            modalStatus.textContent = "Sending MFA...";
+            try {
+              const challenge = await apiFetch("/api/auth/mfa/challenge", {
+                method: "POST",
+                body: JSON.stringify({ action: "pin_reset", amount: "0" }),
+              });
+              if (challenge.code) {
+                showToast(`MFA code (debug): ${challenge.code}`);
+              }
+              const code = window.prompt("Enter MFA code");
+              const verify = await apiFetch("/api/auth/mfa/verify", {
+                method: "POST",
+                body: JSON.stringify({ challenge_id: challenge.challenge_id, code }),
+              });
+              await apiFetch("/api/auth/pin/reset", {
+                method: "POST",
+                body: JSON.stringify({ mfa_token: verify.mfa_token }),
+              });
+              modalStatus.textContent = "PIN reset. Set a new PIN.";
+              showToast("PIN reset");
+              closeModal();
+            } catch (err) {
+              modalStatus.textContent = err.message || "Failed";
+            }
+          }
+        );
+      });
       copyWallet.addEventListener("click", () => {
         if (!walletIdEl) return;
         navigator.clipboard.writeText(walletIdEl.textContent || "");
